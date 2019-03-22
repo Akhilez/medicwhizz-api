@@ -21,3 +21,7 @@ class DatabaseManager(ABC):
     @abstractmethod
     def get_user_config(self, user_id):
         pass
+
+    @abstractmethod
+    def get_random_question(self, start_index, end_index):
+        pass

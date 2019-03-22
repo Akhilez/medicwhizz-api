@@ -1,7 +1,8 @@
 import json
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 
-from medicwhizz.lib.request_handlers import ask as ask_handler
+from medicwhizz.lib.request_handlers import validators
+from medicwhizz.lib.request_handlers.handler import Handler
 
 
 def home(request):
@@ -9,17 +10,33 @@ def home(request):
 
 
 def ask(request):
-    if 'POST' not in request.method:
-        raise Http404
+    status = validators.validate_ask_request(request)
+    if not status['is_valid']:
+        return HttpResponse(validators.get_messages_from_master_status(status))
+    data = validators.get_data_from_master_status(status)
+    return HttpResponse(json.dumps(Handler(data['id_token']).ask(data['quiz_type'], data['quiz_id'])))
 
-    id_token = request.POST.get('id_token')
-    if not id_token:
-        return HttpResponse('Not authenticated')
 
-    quiz_type = request.POST.get('quiz_type')
-    if not quiz_type:
-        return HttpResponse('Quiz type invalid')
+def ask_next(request):
+    status = validators.validate_is_complete_request(request)
+    if not status['is_valid']:
+        return HttpResponse(validators.get_messages_from_master_status(status))
+    data = validators.get_data_from_master_status(status)
+    return HttpResponse(json.dumps(Handler(data['id_token']).ask_next(data['quiz_type'], data['quiz_id'])))
 
-    quiz_id = request.POST.get('quiz_id')
 
-    return HttpResponse(json.dumps(ask_handler.ask(id_token, quiz_type, quiz_id)))
+def is_completed(request):
+    status = validators.validate_is_complete_request(request)
+    if not status['is_valid']:
+        return HttpResponse(validators.get_messages_from_master_status(status))
+    data = validators.get_data_from_master_status(status)
+    return HttpResponse(json.dumps(Handler(data['id_token']).is_complete(data['quiz_type'], data['quiz_id'])))
+
+
+def answer(request):
+    status = validators.validate_answer_request(request)
+    if not status['is_valid']:
+        return HttpResponse(validators.get_messages_from_master_status(status))
+    data = validators.get_data_from_master_status(status)
+    return HttpResponse(
+        json.dumps(Handler(data['id_token']).answer(data['quiz_type'], data['quiz_id'], data['choice_id'])))

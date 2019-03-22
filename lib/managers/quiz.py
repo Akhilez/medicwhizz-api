@@ -1,41 +1,19 @@
-from abc import ABC, abstractmethod
-
 from Akhil.settings import logger
-from medicwhizz.lib.managers.questions import QuestionManager
 
 
-class Quiz(ABC):
+class Quiz:
 
-    def __init__(self, quiz_id, database_manager, questions_package):
+    def __init__(self, quiz_id, database_manager, question_manager):
         self.id = quiz_id
-        self.question_manager = QuestionManager(database_manager, questions_package)
+        self.question_manager = question_manager
         self.database_manager = database_manager
         self.state = self.database_manager.get_quiz_state(self.id)
 
-    @abstractmethod
-    def ask(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def ask_next(self):
-        pass
-
-    @abstractmethod
-    def is_completed(self):
-        pass
-
-    @abstractmethod
-    def answer(self, choice):
-        pass
-
-
-class QuickQuiz(Quiz):  # TODO: Move quiz question logic to question manager.
-
-    def ask(self, **kwargs):
+    def ask(self):
         if self.state.num_questions_done >= self.state.num_questions:
             raise QuizException("Cannot ask more questions")
 
-        self.state.current_question = self.get_random_question()
+        self.state.current_question = self.question_manager.get_next_question(state=self.state)
         self.state.num_questions_done += 1
         self.state.questions.append(self.state.current_question)
 
@@ -48,23 +26,19 @@ class QuickQuiz(Quiz):  # TODO: Move quiz question logic to question manager.
         if self.state.num_questions_done >= self.state.num_questions:
             raise QuizException("Cannot ask more questions")
 
-        self.state.next_question = self.get_random_question()
+        self.state.next_question = self.question_manager.get_next_question(state=self.state)
         self.save_state()
 
-    def is_completed(self):
+        return self.state.next_question
+
+    def has_completed(self):
         return self.state.num_questions == self.state.num_questions_done
 
-    def get_random_question(self):
-        while True:  # TODO: Improve the get_random logic
-            question = self.question_manager.get_random()
-            if question not in self.state.questions:
-                return question
-
-    def answer(self, choice):
+    def answer(self, choice_id):
         correct_choices = [option for option in self.state.current_question.choices if option.isCorrect]
-        if choice in correct_choices:
+        if choice_id in correct_choices:
             self.state.score += 1
-        self.state.answers.append(choice)
+        self.state.answers.append(choice_id)
         self.save_state()
 
     def save_state(self):

@@ -28,3 +28,6 @@ class FirebaseManager(DatabaseManager):
 
     def get_user_config(self, user_id):
         return None
+
+    def get_random_question(self, start_index, end_index):
+        return None

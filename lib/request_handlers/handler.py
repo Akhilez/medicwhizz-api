@@ -49,7 +49,7 @@ class Handler:
     @Decorators.validate_quiz_type
     @Decorators.validate_quiz_id
     def is_complete(self, quiz_type, quiz_id):
-        return self.get_quiz(quiz_type, quiz_id).has_completed()
+        return self.get_quiz(quiz_type, quiz_id).is_complete()
 
     @Decorators.auth_required
     @Decorators.validate_quiz_type

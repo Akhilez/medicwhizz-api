@@ -31,7 +31,7 @@ class Quiz:
 
         return self.state.next_question
 
-    def has_completed(self):
+    def is_complete(self):
         return self.state.num_questions == self.state.num_questions_done
 
     def answer(self, choice_id):

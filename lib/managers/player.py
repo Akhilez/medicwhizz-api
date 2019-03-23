@@ -8,7 +8,7 @@ class Player:
         self.questions_package = None
 
     def init_details(self, database_manager, **kwargs):
-        self.id = database_manager.auth(kwargs)
+        self.id = database_manager.auth(**kwargs)
         if not self.id:
             return
         user_details = database_manager.get_user_config(self.id)

@@ -10,9 +10,16 @@ class FirebaseManager(DatabaseManager):
 
     def __init__(self):
         super().__init__()
-        cred = credentials.Certificate('Akhil/serviceAccountKey.json')
-        firebase_admin.initialize_app(cred)
+        self.init_app()
         self.db = firestore.client()
+
+    @staticmethod
+    def init_app():
+        try:
+            firebase_admin.get_app()
+        except ValueError:
+            cred = credentials.Certificate('Akhil/serviceAccountKey.json')
+            firebase_admin.initialize_app(cred)
 
     def auth(self, **kwargs):
         id_token = kwargs.get('id_token')

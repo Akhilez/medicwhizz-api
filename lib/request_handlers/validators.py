@@ -1,3 +1,6 @@
+from Akhil.settings import logger
+
+
 def validate_ask_request(request):
     return master_validate(request, {
         CheckTypes.POST: True,
@@ -32,18 +35,21 @@ def master_validate(request, specs):
     :param request: The HttpRequest object.
     :param specs: Should be of form: {'post': True, 'id_token': False}
     :return: Format: {'is_valid': True, 'master_status': [
-            {'check': 'post', 'is_valid': True, 'considered': True, 'data': data, 'message': message}]}
+            {'check_type': 'post', 'is_valid': True, 'considered': True, 'data': data, 'message': message}]}
     """
     master_status = []
     for validation_check in specs:
         status = validate_from_key(validation_check, request)
-        status['check'] = validation_check
+        status['check_type'] = validation_check
         status['considered'] = specs[validation_check]
         master_status.append(status)
+        if status['considered'] and not status['is_valid']:
+            break
 
-    is_valid = all([status for status in master_status if
-                    not status['considered'] or (status['considered'] and status['is_valid'])])
-    return {'is_valid': is_valid, 'master_status': master_status}
+    is_valid = all([status['is_valid'] for status in master_status if status['considered']])
+    result_status = {'is_valid': is_valid, 'master_status': master_status}
+    logger.info(f"result_status = {result_status}")
+    return result_status
 
 
 def validate_from_key(check_type, request):
@@ -52,7 +58,7 @@ def validate_from_key(check_type, request):
 
 
 def validate_post(request):
-    condition = 'POST' not in request.method
+    condition = 'POST' in request.method
     return status_wrapper(condition, message='Site not available.')
 
 
@@ -88,11 +94,11 @@ def status_wrapper(condition, **kwargs):
 
 
 def get_messages_from_master_status(master_status):
-    return [status.get('message') for status in master_status]
+    return [status.get('message') for status in master_status['master_status']]
 
 
 def get_data_from_master_status(master_status):
-    return {status['check_type']: status.get('data') for status in master_status}
+    return {status['check_type']: status.get('data') for status in master_status['master_status']}
 
 
 class CheckTypes:

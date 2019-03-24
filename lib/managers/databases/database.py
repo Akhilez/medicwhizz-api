@@ -11,11 +11,15 @@ class DatabaseManager(ABC):
         pass
 
     @abstractmethod
-    def get_quiz_state(self, quiz_id):
+    def create_quiz(self, player_id, quiz_type):
         pass
 
     @abstractmethod
-    def save_quiz_state(self, state):
+    def get_quiz_state(self, quiz_id, player_id, quiz_type):
+        pass
+
+    @abstractmethod
+    def save_quiz_state(self, state, quiz_id, player_id, quiz_type):
         pass
 
     @abstractmethod

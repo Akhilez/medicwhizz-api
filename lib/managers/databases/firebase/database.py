@@ -10,9 +10,20 @@ import json
 from Akhil import settings
 
 from medicwhizz.lib.managers.databases.database import DatabaseManager
+from medicwhizz.lib.managers.quiz import QuizState
 
 
 class FirebaseManager(DatabaseManager):
+    class Decorators:
+        @classmethod
+        def try_and_catch(cls, function):
+            def inner(*args):
+                try:
+                    function(*args)
+                except Exception as exception:
+                    logger.exception(exception)
+
+            return inner
 
     def __init__(self):
         super().__init__()
@@ -34,23 +45,34 @@ class FirebaseManager(DatabaseManager):
             decoded_token = auth.verify_id_token(id_token)
             return decoded_token['uid']
 
-    def get_quiz_state(self, quiz_id):
-        return None
+    @Decorators.try_and_catch
+    def create_quiz(self, player_id, quiz_type):
+        self.db.collection(f'users/{player_id}/matches/{quiz_type}/matches').add({
+            'answers': [],
+            'questions': [],
+            'score': 0,
+            'startTime': None,
+            'endTime': None,
+            'numQuestionsDone': 0,
+            'numQuestions': 0,
+            'currentQuestion': None,
+            'nextQuestion': None
+        })
 
-    def save_quiz_state(self, state):
-        return
+    @Decorators.try_and_catch
+    def get_quiz_state(self, quiz_id, player_id, quiz_type):
+        state = self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').get()
+        return FirebaseQuizState(state)
 
-    def get_user_config(self, user_id, deep=True):
-        player_config = {}
-        doc_ref = self.db.collection(u'users').document(user_id)
-        try:
-            player_config = doc_ref.get().to_dict()
-            if deep:
-                self.set_and_get_deep_values(player_config)
-        except Exception as exception:
-            logger.error(f"Error in getting player config {exception}")
-        return player_config
+    @Decorators.try_and_catch
+    def save_quiz_state(self, state, quiz_id, player_id, quiz_type):
+        self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').update(state)
 
+    @Decorators.try_and_catch
+    def get_user_config(self, user_id):
+        return self.set_and_get_deep_values(self.db.collection(u'users').document(user_id).get().to_dict())
+
+    @Decorators.try_and_catch
     def get_random_question(self, start_index, end_index):
         random_index = randint(start_index, end_index)
         question = self.db.document('questions').where('position', '==', random_index).get()
@@ -58,30 +80,13 @@ class FirebaseManager(DatabaseManager):
             return self.get_random_question(start_index, end_index)
         return question.to_dict()
 
+    @Decorators.try_and_catch
     def set_and_get_default_package(self, user_id):
-        """
-        1. Get the default package.
-        2. Set the question reference to the user.
-        3. Return the package dict
-        :param deep: Check if the deep data is needed.
-        :param user_id: uid
-        :return: package dict - {'packages/ID': {'startIndex': 1 ...}}
-        """
-        try:
-            package_ref = self.db.collection(u'packages').where(u'name', u'==', u'basic')
-            player_ref = self.db.collection('users').document(user_id)
-            package = [doc for doc in package_ref.get()][0]
-            self.set_player_attributes(player_ref, package=package.reference, startDate=datetime.now())
-            return self.set_and_get_deep_values(package.to_dict())
-        except Exception as exception:
-            logger.exception(f"Failed to set and get default package. {exception}")
-
-    @staticmethod
-    def set_player_attributes(player_ref, **kwargs):
-        try:
-            player_ref.update(kwargs)
-        except Exception as exception:
-            logger.exception(f"Failed to set player attributes{kwargs}. {exception}")
+        package_ref = self.db.collection(u'packages').where(u'name', u'==', u'basic')
+        player_ref = self.db.collection('users').document(user_id)
+        package = [doc for doc in package_ref.get()][0]
+        player_ref.update({'package': package.reference, 'startDate': datetime.now()})
+        return self.set_and_get_deep_values(package.to_dict())
 
     def set_and_get_deep_values(self, values):
         for key in values:
@@ -181,7 +186,12 @@ class FirebaseManager(DatabaseManager):
                                     'answers': ['/questions/ID/choices/ID'],
                                     'questions': ['/questions/ID'],
                                     'score': 1,
-                                    'startTime': '1 July 2018 at 15:59:11 UTC+5:30'
+                                    'startTime': '1 July 2018 at 15:59:11 UTC+5:30',
+                                    'endTime': '1 July 2018 at 15:59:11 UTC+5:30',
+                                    'numQuestionsDone': 0,
+                                    'numQuestions': 0,
+                                    'currentQuestion': None,
+                                    'nextQuestion': None
                                 }
                             }
                         },
@@ -203,3 +213,10 @@ class FirebaseManager(DatabaseManager):
             }
         }
         return collections
+
+
+class FirebaseQuizState(QuizState):
+    def __init__(self, state_dict):
+        super().__init__()
+        self.state_dict = state_dict
+

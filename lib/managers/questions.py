@@ -23,6 +23,10 @@ class QuestionManager(ABC):
 
 class RandomQuestionManager(QuestionManager):
 
+    def __init__(self, database_manager, package):
+        super().__init__(database_manager, package)
+        self.type = RANDOM
+
     def get_next_question(self, state, **kwargs):
         return self.get_random_question_excluding(state.questions)
 

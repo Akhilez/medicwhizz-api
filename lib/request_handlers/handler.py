@@ -1,4 +1,4 @@
-from medicwhizz.lib.managers.databases.firebase.db import FirebaseManager
+from medicwhizz.lib.managers.databases.firebase.database import FirebaseManager
 from medicwhizz.lib.managers.player import Player
 from medicwhizz.lib.managers.questions import QuestionManager
 from medicwhizz.lib.managers.quiz import Quiz
@@ -58,9 +58,10 @@ class Handler:
         return self.get_quiz(quiz_type, quiz_id).answer(choice_id)
 
     def get_quiz(self, quiz_type, quiz_id):
-        question_manager = QuestionManager.get_class(quiz_type)(self.database_manager, self.player.questions_package)
-        if not quiz_id:
-            self.database_manager.create_quiz(player_id)
-        quiz = Quiz(quiz_id, self.database_manager, question_manager)
-
+        quiz = Quiz(
+            player=self.player,
+            quiz_id=quiz_id if quiz_id else self.database_manager.create_quiz(self.player.id, quiz_type),
+            quiz_type=quiz_type,
+            database_manager=self.database_manager
+        )
         return quiz

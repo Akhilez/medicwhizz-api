@@ -1,5 +1,5 @@
 from Akhil import settings
-from medicwhizz.lib.managers.databases.firebase.db import FirebaseManager
+from medicwhizz.lib.managers.databases.firebase.database import FirebaseManager
 import os
 
 os.environ['CURRENT_ENV'] = settings.PROD_ENV

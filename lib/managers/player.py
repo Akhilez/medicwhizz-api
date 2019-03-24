@@ -10,6 +10,6 @@ class Player:
         if not self.id:
             return
         user_details = database_manager.get_user_config(self.id)
-        self.questions_package = user_details.get('questions_package',
-                                                  database_manager.set_and_get_default_package(self.id))
+        package_with_path = user_details.get('package', database_manager.set_and_get_default_package(self.id))
+        self.questions_package = package_with_path[list(package_with_path.keys())[0]]
         self.details = user_details

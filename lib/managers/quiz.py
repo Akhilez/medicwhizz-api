@@ -9,6 +9,11 @@ class Quiz:
         self.database_manager = database_manager
         self.state = self.database_manager.get_quiz_state(self.id)
 
+    def create(self, player_id):
+        quiz = self.database_manager.create_quiz(player_id)
+        self.id = quiz.id
+        self.state = quiz
+
     def ask(self):
         if self.state.num_questions_done >= self.state.num_questions:
             raise QuizException("Cannot ask more questions")

@@ -88,15 +88,15 @@ class FirebaseManager(DatabaseManager):
         player_ref.update({'package': package.reference, 'startDate': datetime.now()})
         return self.set_and_get_deep_values(package.to_dict())
 
-    def set_and_get_deep_values(self, values):
-        for key in values:
-            value = values[key]
+    def set_and_get_deep_values(self, collections):
+        for collection_name in collections:
+            value = collections[collection_name]
             if isinstance(value, DocumentReference):
                 try:
-                    values[key] = self.set_and_get_deep_values(self.db.document('/'.join(value._path)).get().to_dict())
+                    collections[collection_name] = self.set_and_get_deep_values(self.db.document('/'.join(value._path)).get().to_dict())
                 except Exception as exception:
                     logger.exception(f"Failed to get deep data. {exception}")
-        return values
+        return collections
 
     def dump(self):
         dump_file_path = 'medicwhizz/dumps/' + datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S') + '.json'
@@ -133,9 +133,11 @@ class FirebaseManager(DatabaseManager):
     @staticmethod
     def get_schema():
         collections = {
-            'explanations': {  # Col
+            'extra': {  # Col
                 'ID': {  # Questions ID. Doc
-                    'explanation': 'explanation'
+                    'explanation': 'explanation',
+                    'attempts': 90,
+                    'corrects': 60
                 }
             },
             'links': {
@@ -150,7 +152,8 @@ class FirebaseManager(DatabaseManager):
                 }
             },
             'packages': {
-                'basic': {
+                'ID': {
+                    'name': 'basic',
                     'duration': 365,
                     'endIndex': 300,
                     'price': 2.5,
@@ -178,7 +181,7 @@ class FirebaseManager(DatabaseManager):
                 }
             },
             'users': {  # Collection
-                'TV6W1HjHIQOHcp5qmtuXLoW5ben2': {  # Document
+                'ID': {  # Document  TV6W1HjHIQOHcp5qmtuXLoW5ben2
                     'matches': {  # Collection
                         'quick': {  # Document
                             'matches': {  # Collection
@@ -188,12 +191,18 @@ class FirebaseManager(DatabaseManager):
                                     'score': 1,
                                     'startTime': '1 July 2018 at 15:59:11 UTC+5:30',
                                     'endTime': '1 July 2018 at 15:59:11 UTC+5:30',
-                                    'numQuestionsDone': 0,
-                                    'numQuestions': 0,
-                                    'currentQuestion': None,
-                                    'nextQuestion': None
+                                    'numQuestions': 0
                                 }
-                            }
+                            },
+                            'running': True,
+                            'startTime': '1 July 2018 at 15:59:11 UTC+5:30',
+                            'numQuestionsDone': 0,
+                            'numQuestions': 0,
+                            'currentQuestion': None,
+                            'nextQuestion': None,
+                            'answers': ['/questions/ID/choices/ID'],
+                            'questions': ['/questions/ID'],
+                            'score': 1
                         },
                         'full': {  # Document
                             'answers': ['/questions/ID/choices/ID'],
@@ -208,7 +217,8 @@ class FirebaseManager(DatabaseManager):
                     'name': 'Akhilez',
                     'package': '/packages/WtLXCpAkpPHIFRhZUkaA',
                     'photoUri': 'https://lh3.googleusercontent.com/-HXbmqoCwO3M/AAAAAAAAAAI/AAAAAAAAO7M/ZJDFbi8XzVI/photo.jpg',
-                    'startDate': '22 March 2019 at 01:12:32 UTC+5:30'
+                    'startDate': '22 March 2019 at 01:12:32 UTC+5:30',
+                    'photoPublic': False
                 }
             }
         }

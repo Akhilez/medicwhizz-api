@@ -48,7 +48,7 @@ def master_validate(request, specs):
 
     is_valid = all([status['is_valid'] for status in master_status if status['considered']])
     result_status = {'is_valid': is_valid, 'master_status': master_status}
-    logger.info(f"result_status = {result_status}")
+    logger.info("result_status = %s" % result_status)
     return result_status
 
 

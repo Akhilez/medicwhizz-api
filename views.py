@@ -1,7 +1,7 @@
 import json
+
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
 from medicwhizz.lib.request_handlers import validators
 from medicwhizz.lib.request_handlers.handler import Handler
 

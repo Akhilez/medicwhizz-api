@@ -5,7 +5,6 @@ from medicwhizz.lib.managers.quiz import Quiz
 
 
 class Handler:
-
     class Decorators:
         @classmethod
         def auth_required(cls, function):
@@ -13,6 +12,7 @@ class Handler:
                 if not self.player.id:
                     return 'User not authenticated'
                 return function(self, *args)
+
             return inner
 
         @classmethod
@@ -21,6 +21,7 @@ class Handler:
                 if not QuestionManager.get_class(quiz_type):
                     return 'Quiz type invalid.'
                 return function(self, quiz_type, *args)
+
             return inner
 
         @classmethod
@@ -28,6 +29,7 @@ class Handler:
             def inner(self, quiz_type, quiz_id, *args):
                 # TODO: Validate quiz id
                 return function(self, quiz_type, quiz_id, *args)
+
             return inner
 
     def __init__(self, id_token=None):

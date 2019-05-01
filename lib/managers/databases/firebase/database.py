@@ -1,14 +1,14 @@
-import firebase_admin
-from Akhil.settings import logger
-from firebase_admin import credentials
-from firebase_admin import firestore
-from google.cloud.firestore_v1beta1 import DocumentReference, CollectionReference
-from firebase_admin import auth
+import json
 from datetime import datetime
 from random import randint
-import json
-from Akhil import settings
 
+import firebase_admin
+from Akhil import settings
+from Akhil.settings import logger
+from firebase_admin import auth
+from firebase_admin import credentials
+from firebase_admin import firestore
+from google.cloud.firestore_v1beta1 import DocumentReference
 from medicwhizz.lib.managers.databases.database import DatabaseManager
 from medicwhizz.lib.managers.quiz import QuizState
 
@@ -35,7 +35,9 @@ class FirebaseManager(DatabaseManager):
         try:
             firebase_admin.get_app()
         except ValueError:
-            certificate_path = f'{settings.BASE_DIR}/{settings.PROJECT_NAME}/firebase_service_accounts/{settings.CURRENT_ENV}.json'
+            certificate_path = '{}/{}/firebase_service_accounts/{}.json'.format(settings.BASE_DIR,
+                                                                                settings.PROJECT_NAME,
+                                                                                settings.CURRENT_ENV)
             cred = credentials.Certificate(certificate_path)
             firebase_admin.initialize_app(cred)
 
@@ -47,7 +49,7 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def create_quiz(self, player_id, quiz_type):
-        self.db.collection(f'users/{player_id}/matches/{quiz_type}/matches').add({
+        self.db.collection('users/' + player_id + '/matches/' + quiz_type + '/matches').add({
             'answers': [],
             'questions': [],
             'score': 0,
@@ -61,12 +63,12 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def get_quiz_state(self, quiz_id, player_id, quiz_type):
-        state = self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').get()
+        state = self.db.document('users/' + player_id + '/matches/' + quiz_type + '/matches/' + quiz_id).get()
         return FirebaseQuizState(state)
 
     @Decorators.try_and_catch
     def save_quiz_state(self, state, quiz_id, player_id, quiz_type):
-        self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').update(state)
+        self.db.document('users/' + player_id + '/matches/' + quiz_type + '/matches/' + quiz_id).update(state)
 
     @Decorators.try_and_catch
     def get_user_config(self, user_id):
@@ -93,9 +95,10 @@ class FirebaseManager(DatabaseManager):
             value = collections[collection_name]
             if isinstance(value, DocumentReference):
                 try:
-                    collections[collection_name] = self.set_and_get_deep_values(self.db.document('/'.join(value._path)).get().to_dict())
+                    collections[collection_name] = self.set_and_get_deep_values(
+                        self.db.document('/'.join(value._path)).get().to_dict())
                 except Exception as exception:
-                    logger.exception(f"Failed to get deep data. {exception}")
+                    logger.exception("Failed to get deep data. %s" % exception)
         return collections
 
     def dump(self):
@@ -106,7 +109,7 @@ class FirebaseManager(DatabaseManager):
             with open(dump_file_path, 'w') as dump_file:
                 dump_file.write(collections_string)
         except Exception as exception:
-            logger.exception(f"Error while dumping to {dump_file_path}. {exception}")
+            logger.exception("Error while dumping to %s. %s" % (dump_file_path, exception))
 
     def get_complete_data_as_dict(self):
         return {collection: self.set_and_get_deep_values(self.db.collection(collection).get().to_dict())
@@ -119,7 +122,7 @@ class FirebaseManager(DatabaseManager):
                 for collection in collections:
                     self.restore(collection, [collection])
         except Exception as exception:
-            logger.exception(f"Error while restoring from {restore_source_path}. {exception}")
+            logger.exception("Error while restoring from %s. %s" % (restore_source_path, exception))
 
     def restore(self, collections, path):
         for collection in collections:
@@ -229,4 +232,3 @@ class FirebaseQuizState(QuizState):
     def __init__(self, state_dict):
         super().__init__()
         self.state_dict = state_dict
-

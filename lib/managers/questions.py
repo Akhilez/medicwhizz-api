@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-
 RANDOM = 'quick'
 ALL = 'full'
 

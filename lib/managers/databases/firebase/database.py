@@ -35,9 +35,8 @@ class FirebaseManager(DatabaseManager):
         try:
             firebase_admin.get_app()
         except ValueError:
-            certificate_path = '{}/{}/firebase_service_accounts/{}.json'.format(settings.BASE_DIR,
-                                                                                settings.PROJECT_NAME,
-                                                                                settings.CURRENT_ENV)
+            certificate_path = '{}/medicwhizz/firebase_service_accounts/{}.json'.format(settings.BASE_DIR,
+                                                                                        settings.CURRENT_ENV)
             cred = credentials.Certificate(certificate_path)
             firebase_admin.initialize_app(cred)
 

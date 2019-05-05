@@ -3,4 +3,5 @@ __pycache__/
 venv/
 migrations/
 dumps/
+firebase_service_accounts
 *.py[cod]

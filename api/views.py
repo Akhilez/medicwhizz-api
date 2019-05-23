@@ -2,8 +2,8 @@ import json
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from medicwhizz.lib.request_handlers import validators
-from medicwhizz.lib.request_handlers.handler import Handler
+from lib.request_handlers import validators
+from lib.request_handlers.handler import Handler
 
 
 def home(request):
@@ -42,3 +42,7 @@ def answer(request):
     data = validators.get_data_from_master_status(status)
     return HttpResponse(
         json.dumps(Handler(data['id_token']).answer(data['quiz_type'], data['quiz_id'], data['choice_id'])))
+
+
+def redirect_to_home(request):
+    return home(request)

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from medicwhizz import views
+from api import views
 
 __author__ = 'Akhilez'
 

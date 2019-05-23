@@ -3,5 +3,7 @@ __pycache__/
 venv/
 migrations/
 dumps/
-firebase_service_accounts
+keys/
 *.py[cod]
+db.sqlite3
+*.log

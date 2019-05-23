@@ -1,4 +1,4 @@
-from Akhil.settings import logger
+from medicwhizz_web.settings import logger
 
 
 def validate_ask_request(request):

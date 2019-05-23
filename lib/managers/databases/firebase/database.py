@@ -3,29 +3,33 @@ from datetime import datetime
 from random import randint
 
 import firebase_admin
-from Akhil import settings
-from Akhil.settings import logger
+
+from lib.utils import Decorators
+from medicwhizz_web import settings
+from medicwhizz_web.settings import logger
 from firebase_admin import auth
 from firebase_admin import credentials
 from firebase_admin import firestore
 from google.cloud.firestore_v1beta1 import DocumentReference
-from medicwhizz.lib.managers.databases.database import DatabaseManager
-from medicwhizz.lib.managers.quiz import QuizState
+from lib.managers.databases.database import DatabaseManager
+from lib.managers.quiz import QuizState
 
 
 class FirebaseManager(DatabaseManager):
-    class Decorators:
-        @classmethod
-        def try_and_catch(cls, function):
-            def inner(*args):
-                try:
-                    function(*args)
-                except Exception as exception:
-                    logger.exception(exception)
+    __instance = None
 
-            return inner
+    @staticmethod
+    def get_instance():
+        """ Static access method. """
+        if FirebaseManager.__instance is None:
+            FirebaseManager()
+        return FirebaseManager.__instance
 
     def __init__(self):
+        """ Virtually private constructor. """
+        if FirebaseManager.__instance is not None:
+            raise Exception("This class is a singleton!")
+        FirebaseManager.__instance = self
         super().__init__()
         self.init_app()
         self.db = firestore.client()
@@ -35,8 +39,7 @@ class FirebaseManager(DatabaseManager):
         try:
             firebase_admin.get_app()
         except ValueError:
-            certificate_path = '{}/medicwhizz/firebase_service_accounts/{}.json'.format(settings.BASE_DIR,
-                                                                                        settings.CURRENT_ENV)
+            certificate_path = f'{settings.BASE_DIR}/keys/firebase_service_accounts/{settings.CURRENT_ENV}.json'
             cred = credentials.Certificate(certificate_path)
             firebase_admin.initialize_app(cred)
 
@@ -59,6 +62,13 @@ class FirebaseManager(DatabaseManager):
             'currentQuestion': None,
             'nextQuestion': None
         })
+
+    def is_authenticated(self, id_token):
+        if id_token:
+            FirebaseManager.get_instance()
+            from firebase_admin import auth
+            decoded_token = auth.verify_id_token(id_token)
+            return decoded_token
 
     @Decorators.try_and_catch
     def get_quiz_state(self, quiz_id, player_id, quiz_type):
@@ -147,7 +157,7 @@ class FirebaseManager(DatabaseManager):
                     'accentColor': '#fff',
                     'backgroundColor': '#fff',
                     'description': 'Group Discussions',
-                    'link': 'https://akhilkanna.in',
+                    'link': 'https://medicwhizz_web',
                     'linkText': "Coming Soon",
                     'position': 100,
                     'title': 'WhatsApp'
@@ -216,7 +226,7 @@ class FirebaseManager(DatabaseManager):
                         }
                     },
                     'level': 1.3,
-                    'name': 'Akhilez',
+                    'name': 'medicwhizz_web',
                     'package': '/packages/WtLXCpAkpPHIFRhZUkaA',
                     'photoUri': 'https://lh3.googleusercontent.com/-HXbmqoCwO3M/AAAAAAAAAAI/AAAAAAAAO7M/ZJDFbi8XzVI/photo.jpg',
                     'startDate': '22 March 2019 at 01:12:32 UTC+5:30',

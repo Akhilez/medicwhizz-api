@@ -1,0 +1,19 @@
+{% extends 'app/base.html' %}
+
+{% block container %}
+
+    {% if message %}
+        {{ message }}
+    {% endif %}
+
+    <form action="" method="post">
+    {% csrf_token %}
+    Email :
+    <input type="email" name="email"><br><br>
+    Password:
+    <input type="password" name="password"><br><br>
+    <input type="submit" value="SignUp" name="sign_up">
+
+</form>
+
+{% endblock container %}

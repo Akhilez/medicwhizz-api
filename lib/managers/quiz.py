@@ -1,5 +1,5 @@
-from Akhil.settings import logger
-from medicwhizz.lib.managers.questions import QuestionManager
+from medicwhizz_web.settings import logger
+from lib.managers.questions import QuestionManager
 
 
 class Quiz:

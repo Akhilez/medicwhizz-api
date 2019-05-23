@@ -1,7 +1,7 @@
-from medicwhizz.lib.managers.databases.firebase.database import FirebaseManager
-from medicwhizz.lib.managers.player import Player
-from medicwhizz.lib.managers.questions import QuestionManager
-from medicwhizz.lib.managers.quiz import Quiz
+from lib.managers.databases.firebase.database import FirebaseManager
+from lib.managers.player import Player
+from lib.managers.questions import QuestionManager
+from lib.managers.quiz import Quiz
 
 
 class Handler:

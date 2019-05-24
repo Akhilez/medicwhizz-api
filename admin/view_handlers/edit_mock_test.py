@@ -1,5 +1,3 @@
-from numbers import Number
-
 from django.shortcuts import redirect
 
 from lib.managers.databases.firebase.database import FirebaseManager
@@ -15,7 +13,18 @@ class EditMockPage(Page):
         self.context['mock_id'] = mock_test_id
 
     def get_view(self):
+        # TODO: Get the questions
         return self.render_view()
+
+
+class EditMockQuestionPage(Page):
+    def __init__(self, request, mock_test_id, mock_test_question_id):
+        super().__init__(request)
+        self.mock_id = mock_test_id
+        self.question_id = mock_test_question_id
+        self.template_path = ''
+        self.context['mock_id'] = mock_test_id
+        self.context['question_id'] = mock_test_question_id
 
 
 class AddMockPage(Page):

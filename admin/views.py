@@ -14,3 +14,7 @@ def add_mock(request):
 
 def edit_mock(request, mock_test_id):
     return EditMockPage(request, mock_test_id).get_view()
+
+
+def edit_mock_question(request, mock_test_id, mock_test_question_id):
+    return EditMockQuestionPage(request, mock_test_id, mock_test_question_id).get_view()

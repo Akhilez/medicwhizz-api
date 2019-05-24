@@ -4,6 +4,20 @@
 
     Hi. You would edit this mock. {{ mock_id }}
 
+    Name: <input type="text" name="name" value="{{ mock_test.name }}"><br/><br/>
+    Price:<br/>
+    Indian Rupee: <input type="number" step="0.01" placeholder="Ex: 123.43" name="price_india" value="{{ mock_test.price.india }}"><br/><br/>
+    UK Pounds:
+        <input type="number" step="0.01" placeholder="Ex: 1.3" name="price_uk" value="{{ mock_test.price.uk }}"><br/><br/>
+
+    <input type="submit" value="Save" name="save_doc">
+
+    <hr/>
+
+    {% for question in mock_test_questions %}
+        {{ question.index }}. {{ question.text }}<a href="{% url 'admin:edit_mock_question' mock_id question.id %}">Edit</a><br/><br/>
+    {% endfor %}
+
 
 
 {% endblock container %}

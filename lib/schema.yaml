@@ -73,9 +73,10 @@ collections:
       users: # Col
         - uid: uid
   mockTests: # Col
-    mock1: # Doc
-      name: mock1
-      price: 0
+    - name: Mock 1
+      price:  # Map
+        india: 0 #rupees
+        uk: 0 #pounds
       questions: # Col
         - index: 0
           text: What is the correct answer?

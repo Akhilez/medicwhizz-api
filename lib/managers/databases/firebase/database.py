@@ -51,6 +51,15 @@ class FirebaseManager(DatabaseManager):
 
 # ======================== Firestore methods ===========================
 
+    def create_mock_test(self, name, prices):
+        response = self.db.collection('mockTests').add({
+            'name': name,
+            'prices': prices
+        })
+        if len(response) > 1:
+            return response[1]
+        logger.error(f"Problem creating mock_test. {response}")
+
     def list_mock_tests(self):
         mock_tests_stream = self.db.collection('mockTests').stream()
         mock_tests = [mock_test for mock_test in mock_tests_stream]

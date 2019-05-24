@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 
 from admin.view_handlers.admin_home import AdminHomePage
+from admin.view_handlers.edit_mock_test import AddMockPage, EditMockPage
 
 
 def admin_home(request):
@@ -8,8 +9,8 @@ def admin_home(request):
 
 
 def add_mock(request):
-    return HttpResponse("add mockkk")
+    return AddMockPage(request).get_view()
 
 
 def edit_mock(request, mock_test_id):
-    return HttpResponse(mock_test_id)
+    return EditMockPage(request, mock_test_id).get_view()

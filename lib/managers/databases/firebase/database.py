@@ -52,7 +52,30 @@ class FirebaseManager(DatabaseManager):
 # ======================== Firestore methods ===========================
 
     def is_user_admin(self, uid):
-        return True
+        logger.info(f"Checking whether user {uid} is an admin or not.")
+        admin_doc = self.get_admin_document()
+        user_docs = self.db.collection(f'{admin_doc.path}/users').where('uid', '==', uid)
+        user_docs = [user_doc for user_doc in user_docs.stream()]
+        return len(user_docs) > 0
+
+    def get_admin_document(self):
+        admin_docs = self.db.collection('groups').where('name', '==', 'admin')
+        groups = [doc for doc in admin_docs.stream()]
+        if len(groups) == 0:
+            group = self.create_group(group_name='admin')
+            if group is None:
+                logger.error(f"Failed to create group admin")
+                return None
+            return group
+        logger.info(f"Group = {groups[0].__dict__}")
+        return groups[0].reference
+
+    def create_group(self, group_name, permissions=None):
+        group = {'name': group_name, 'permissions': permissions}
+        response = self.db.collection('groups').add(group)
+        if len(response) == 2:
+            return response[1]
+        logger.error(f"problem creating group {group_name}. {response}")
 
     @Decorators.try_and_catch
     def create_quiz(self, player_id, quiz_type):

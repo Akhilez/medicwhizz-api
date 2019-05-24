@@ -29,17 +29,18 @@ ALLOWED_HOSTS = ['*']
 
 MW_APPS = [
     'api',
-    'app'
+    'quiz',
+    'admin'
 ]
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]+MW_APPS
+] + MW_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -104,7 +105,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'app.log',
+            'filename': 'quiz.log',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024,  # 1 MB
             'backupCount': 2,

@@ -7,7 +7,7 @@ class Page(ABC):
     def __init__(self, request):
         self.context = {}
         self.request = request
-        self.template_path = 'app/index.html'
+        self.template_path = 'quiz/index.html'
 
     def get_view(self):
         return self.render_view()

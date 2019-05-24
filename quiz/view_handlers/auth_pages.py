@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 
 from lib.auth.firebase_auth import FirebaseAuth
-from lib.view_handlers.base import Page
+from quiz.view_handlers.base import Page
 from medicwhizz_web.settings import logger
 
 
@@ -9,7 +9,7 @@ class LoginPage(Page):
 
     def __init__(self, request):
         super().__init__(request)
-        self.template_path = 'app/authenticate.html'
+        self.template_path = 'quiz/authenticate.html'
         self.firebase_auth = FirebaseAuth.get_instance()
 
     def get_view(self):
@@ -34,7 +34,7 @@ class SignUpPage(Page):
 
     def __init__(self, request):
         super().__init__(request)
-        self.template_path = 'app/sign_up.html'
+        self.template_path = 'quiz/sign_up.html'
 
     def get_view(self):
         if self.request.method == 'POST':
@@ -48,7 +48,7 @@ class SignUpPage(Page):
 class ResetPasswordPage(Page):
     def __init__(self, request):
         super().__init__(request)
-        self.template_path = 'app/forgot_password.html'
+        self.template_path = 'quiz/forgot_password.html'
 
     def get_view(self):
         if self.request.method == 'POST':

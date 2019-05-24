@@ -4,6 +4,7 @@ venv/
 migrations/
 dumps/
 keys/
+temp/
 *.py[cod]
 db.sqlite3
 *.log

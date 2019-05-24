@@ -1,12 +1,13 @@
 from django.shortcuts import redirect
 
 from lib.utils import Decorators
-from lib.view_handlers.auth_pages import LoginPage, SignUpPage, ResetPasswordPage
-from lib.view_handlers.home_page import HomePage
+from quiz.view_handlers import auth_pages
+from quiz.view_handlers.auth_pages import LoginPage, SignUpPage, ResetPasswordPage
+from quiz.view_handlers.home_page import HomePage
 
 
 def redirect_to_home(request):
-    return redirect('/app/home')
+    return redirect('/quiz/home')
 
 
 @Decorators.firebase_login_required
@@ -19,7 +20,6 @@ def authenticate(request):
 
 
 def logout(request):
-    from lib.view_handlers import auth_pages
     return auth_pages.handle_logout(request)
 
 

@@ -19,5 +19,5 @@ class Decorators:
                 return function(request, *args)
             else:
                 from django.shortcuts import redirect
-                return redirect('/app/authenticate')
+                return redirect('/quiz/authenticate')
         return inner

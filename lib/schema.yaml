@@ -68,11 +68,10 @@ collections:
             - question: /questions/ID
               choice: /questions/ID/choices/ID
   groups:
-    - gid: string
-      name: group name
+    - name: group name
       permissions: ['all']
       users: # Col
-        - userId: uid
+        - uid: uid
   mocks: # Col
     pack1: # Doc
       questions: # Col

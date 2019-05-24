@@ -1,14 +1,12 @@
-from django.shortcuts import render
-
 from lib.auth.firebase_auth import FirebaseAuth
 from lib.managers.databases.firebase.database import FirebaseManager
-from lib.view_handlers.base import Page
+from quiz.view_handlers.base import Page
 
 
 class HomePage(Page):
     def __init__(self, request):
         super().__init__(request)
-        self.template_path = 'app/index.html'
+        self.template_path = 'quiz/index.html'
         self.db = FirebaseManager.get_instance()
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
 

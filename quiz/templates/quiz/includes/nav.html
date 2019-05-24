@@ -6,6 +6,9 @@
         <div class="mdl-layout-spacer"></div>
         <!-- Navigation. We hide it in small screens. -->
         <nav class="mdl-navigation mdl-layout--large-screen-only">
+            {% if is_admin %}
+                <a class="mdl-navigation__link" href="{% url 'admin.home' %}">Admin</a>
+            {% endif %}
             <a class="mdl-navigation__link" href="{% url 'logout' %}">Logout</a>
         </nav>
     </div>

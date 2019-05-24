@@ -4,6 +4,8 @@ from quiz import views
 
 __author__ = 'Akhilez'
 
+app_name = 'quiz'
+
 urlpatterns = [
     url(r'^$', views.home, name="home"),
     url(r'^home/', views.home, name="home"),

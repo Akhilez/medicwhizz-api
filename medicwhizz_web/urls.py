@@ -18,8 +18,8 @@ from quiz import views as app_views
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path('quiz/', include('quiz.urls')),
-    path('api/', include('api.urls')),
-    path('admin/', include('admin.urls')),
+    path('quiz/', include('quiz.urls', namespace='quiz')),
+    path('api/', include('api.urls', namespace='api')),
+    path('admin/', include('admin.urls', namespace='admin')),
     path('', app_views.redirect_to_home),
 ]

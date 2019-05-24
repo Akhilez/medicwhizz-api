@@ -21,3 +21,18 @@ class Decorators:
                 from django.shortcuts import redirect
                 return redirect('/quiz/authenticate')
         return inner
+
+
+def dict_to_object(data):
+    """
+    Converts a dictionary to objects
+    :param data: dict
+    :return: obj (named tuple)
+    """
+    import json
+    return json.loads(json.dumps(data), object_hook=_json_object_hook)
+
+
+def _json_object_hook(d):
+    from collections import namedtuple
+    return namedtuple('node', d.keys())(*d.values())

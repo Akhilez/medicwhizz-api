@@ -4,6 +4,8 @@ from api import views
 
 __author__ = 'Akhilez'
 
+app_name = 'api'
+
 urlpatterns = [
     url(r'^$', views.home, name="home"),
     url(r'^requests/ask/', views.ask, name="ask"),

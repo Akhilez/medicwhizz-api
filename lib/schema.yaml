@@ -72,13 +72,14 @@ collections:
       permissions: ['all']
       users: # Col
         - uid: uid
-  mocks: # Col
-    pack1: # Doc
+  mockTests: # Col
+    mock1: # Doc
+      name: mock1
+      price: 0
       questions: # Col
-        - question:
-            index: 0
-            text: What is the correct answer?
-            choices: # Col
-              - text: Correct option
-                isCorrect: true
-            explanation: String
+        - index: 0
+          text: What is the correct answer?
+          choices: # Col
+            - text: Correct option
+              isCorrect: true
+          explanation: String

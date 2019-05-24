@@ -13,8 +13,8 @@
         Password:
         <input type="password" name="password">
         <input type="submit" value="SignIn" name="sign_in">
-    <button type="button" onclick="location.href='{% url 'sign_up' %}'">SignUp</button>
-    <a href="{% url 'reset_password' %}" >Forgot password?</a>
+    <button type="button" onclick="location.href='{% url 'quiz:sign_up' %}'">SignUp</button>
+    <a href="{% url 'quiz:reset_password' %}" >Forgot password?</a>
     </form>
 
 {% endblock container %}

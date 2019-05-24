@@ -51,6 +51,12 @@ class FirebaseManager(DatabaseManager):
 
 # ======================== Firestore methods ===========================
 
+    def list_mock_tests(self):
+        mock_tests_stream = self.db.collection('mockTests').stream()
+        mock_tests = [mock_test for mock_test in mock_tests_stream]
+        logger.info(f"Mocks found = {mock_tests}")
+        return mock_tests
+
     def is_user_admin(self, uid):
         logger.info(f"Checking whether user {uid} is an admin or not.")
         admin_doc = self.get_admin_document()

@@ -49,6 +49,11 @@ class FirebaseManager(DatabaseManager):
             decoded_token = auth.verify_id_token(id_token)
             return decoded_token['uid']
 
+# ======================== Firestore methods ===========================
+
+    def is_user_admin(self, uid):
+        return True
+
     @Decorators.try_and_catch
     def create_quiz(self, player_id, quiz_type):
         self.db.collection('users/' + player_id + '/matches/' + quiz_type + '/matches').add({

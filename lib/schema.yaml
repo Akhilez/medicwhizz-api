@@ -1,0 +1,85 @@
+collections:
+  links:
+    - description: Group Discussions
+      type: WhatsappGroupLink
+      link: https://akhilkanna.in
+      text: "Coming Soon"
+      position: 100
+      title: WhatsApp
+  packages: # col
+    basic:
+      duration: 365
+      endIndex: 300
+      price: 2.5
+      startIndex: 1
+  questions:  # Col
+    - index: 818
+      text: question?
+      choices:  # Col
+        - text: Option 1
+          isCorrect: False
+      explanation: explanation
+      attemptCount: 34
+      correctAttempts: 24
+      averateTimeTaken: 23
+      discussions:  # Col
+        - user: UID
+          comment: comment
+          timestamp: timestamp
+          replyTo: /extras/questionId/discussions/ID
+  users:
+    - uid: uid
+      level: 1.3
+      name: Akhilez
+      displayName: Akhil Kanna
+      photoUri: https://lh3.googleusercontent.com/-HXbmqoCwO3M/AAAAAAAAAAI/AAAAAAAAO7M/ZJDFbi8XzVI/photo.jpg
+      details: # Col
+        - preferences:
+            quickQuizNumQuestions: 20
+            isPhotoPublic: true
+            questionPack: /packages/WtLXCpAkpPHIFRhZUkaA
+            defaultIcon: "/assets/stockProfilePics/profilePic1.png"
+        - stats:
+            lastSeen: timestamp
+            startDate: 22 March 2019 at 01:12:32 UTC+5:30
+            numAnswersCorrect: 34
+            numQuestionsAnswered: 122
+      matches:  # Collection
+        quick:  # Document
+          matches:  # Collection
+            - score: 12
+              startTime: 1 July 2018 at 15:59:11 UTC+5:30
+              endTime: 1 July 2018 at 15:59:11 UTC+5:30
+              questionRecords: # Col
+                - question: /questions/ID
+                  choice: /questions/ID/choices/ID
+                  questionNumber: 1
+                  timestamp: timestamp
+                  timeTaken: 48
+                  isCorrect: true
+          answeredQuestions: # Col
+            - questionId: /questions/ID
+        full:  # Document
+          elapsedTime: 160
+          lastIndex: 43
+          score: 6
+          startTime: 1 July 2018 at 15:59:11 UTC+5:30
+          questions: # COL
+            - question: /questions/ID
+              choice: /questions/ID/choices/ID
+  groups:
+    - gid: string
+      name: group name
+      permissions: ['all']
+      users: # Col
+        - userId: uid
+  mocks: # Col
+    pack1: # Doc
+      questions: # Col
+        - question:
+            index: 0
+            text: What is the correct answer?
+            choices: # Col
+              - text: Correct option
+                isCorrect: true
+            explanation: String

@@ -1,4 +1,5 @@
 import pyrebase
+
 from keys import credentials
 from lib.managers.databases.firebase.database import FirebaseManager
 from medicwhizz_web.settings import logger, CURRENT_ENV, DEV_ENV, PROD_ENV
@@ -21,24 +22,59 @@ class FirebaseAuth:
         FirebaseAuth.__instance = self
         self.firebase_app = self.initialize_firebase_app()
         self.auth = self.firebase_app.auth()
+        self.auth_details = None
         self.user = None
 
     def auth_with_email(self, email, password):
         try:
-            self.user = self.auth.sign_in_with_email_and_password(email, password)
+            logger.info(f'User before login = {self.user}')
+            self.auth_details = self.auth.sign_in_with_email_and_password(email, password)
+            logger.info(f"Login response = {self.auth_details}")
+            self.initialize_user_auth_details(self.auth_details['idToken'])
+            logger.info(f'User after login = {self.user}')
             return True
-        except:
-            logger.info(f"Login failed for email {email}")
+        except Exception as e:
+            logger.info(f"Login failed for email {email}. {e}")
             return False
 
-    def is_authenticated(self, id_token):
+    def is_authenticated(self, session):
+        id_token = session.get('id_token')
         if id_token:
             try:
-                is_auth = FirebaseManager.get_instance().is_authenticated(id_token)
-                return is_auth and self.auth.get_account_info(id_token)['users'][0]['emailVerified']
+                return self.is_authenticated_and_email_verified(id_token) or \
+                       self.is_authenticated_and_email_verified(self.refresh_id_token(id_token))
             except Exception as e:
                 logger.error(e)
-                return False
+        return False
+
+    def is_authenticated_and_email_verified(self, id_token):
+        is_auth = FirebaseManager.get_instance().is_authenticated(id_token)
+        if is_auth:
+            self.user = self.initialize_user_auth_details(id_token)
+            return self.user['emailVerified']
+
+    def refresh_id_token(self, id_token):
+        self.auth_details = self.auth.refresh(id_token)
+        return self.auth_details['idToken']
+
+    def initialize_user_auth_details(self, id_token):
+        """
+        :param id_token: id_token
+        :return: dict : {'localId': 'LIaDqg1YISPR0Qg22ibq9g5TAgH3', 'email': 'lightrescuer@gmail.com',
+             'passwordHash': 'UkVEQUNURUQ=', 'emailVerified': True, 'passwordUpdatedAt': 1558621724112,
+             'providerUserInfo': [
+                 {'providerId': 'password', 'federatedId': 'lightrescuer@gmail.com', 'email': 'lightrescuer@gmail.com',
+                  'rawId': 'lightrescuer@gmail.com'}], 'validSince': '1558621724', 'lastLoginAt': '1558682989858',
+             'createdAt': '1558621724112'}
+        """
+        try:
+            logger.info(f'user = {self.user}')
+            if self.user is None:
+                self.user = self.auth.get_account_info(id_token)['users'][0]
+                logger.info(f'new user details = {self.user}')
+        except Exception as e:
+            logger.error(e)
+        return self.user
 
     def create_user(self, email, password):
         if email and password:

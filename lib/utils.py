@@ -15,7 +15,7 @@ class Decorators:
     def firebase_login_required(cls, function):
         def inner(request, *args):
             from lib.auth.firebase_auth import FirebaseAuth
-            if FirebaseAuth.get_instance().is_authenticated(request.session.get('id_token')):
+            if FirebaseAuth.get_instance().is_authenticated(request.session):
                 return function(request, *args)
             else:
                 from django.shortcuts import redirect

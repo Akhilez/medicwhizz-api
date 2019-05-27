@@ -51,6 +51,17 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
+    def add_new_mock_choice(self, mock_id, question_id, choice_text, is_correct):
+        choices_dict = {'text': str(choice_text), 'isCorrect': bool(is_correct)}
+        response = self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').add(choices_dict)
+        if len(response) == 2:
+            if isinstance(response[1], DocumentReference):
+                return response[1]
+        return f'{response}'
+
+    def get_mock_choices(self, mock_id, question_id):
+        return self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices')
+
     def is_mock_question_present(self, mock_id, index):
         # TODO: Check if this index already exists in the collection.
         return False
@@ -88,6 +99,10 @@ class FirebaseManager(DatabaseManager):
     def add_choices_to_mock_question(self, choices, mock_id, question_id):
         # TODO: Add a choices collection to questions.
         return []
+
+    def get_mock_question(self, mock_id, question_id):
+        question = self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
+        return question
 
     def get_mock_test(self, mock_id):
         mock_test = self.db.document(f'mockTests/{mock_id}').get()

@@ -2,8 +2,46 @@
 
 {% block container %}
 
+    {{ error }}
+
     Edit this question.
     {{ mock_id }}
     {{ question_id }}
+
+    <form action="" method="post">
+    {% csrf_token %}
+
+    Question: <textarea name="question_text">{{ question.text }}</textarea><br/>
+    Explanation: <textarea name="explanation">{{ question.explanation }}</textarea><br/>
+
+    Choices:
+    {% for choice in choices %}
+        {{ choice.id }}.
+        <input type="text" name="choice-{{ choice.id }}" value="{{ choice.text }}">
+        <input type="checkbox" {% if choice.isCorrect %} checked {% endif %} name="is_correct"><br/>
+    {% endfor %}
+    <button onclick="popAddChoice()" type="button">Add</button>
+
+    <div id="add_choice_pop_up" style="display: none;">
+        Your unsaved changes will be lost. Please save the changes (if any) before adding a new choice.
+        <input type="text" name="new_choice_text" placeholder="New Choice" required>
+        is this choice a correct option?
+        <input type="checkbox" name="new_choice_is_correct">
+        <input type="submit" name="add_new_choice" value="Add">
+        <button onclick="closePopUp()"  type="button">Close</button>
+    </div>
+
+    <input type="submit" value="Save" name="save_details">
+
+    </form>
+
+    <script>
+    function popAddChoice() {
+        document.getElementById("add_choice_pop_up").style.display = 'block';
+    }
+    function closePopUp() {
+        document.getElementById("add_choice_pop_up").style.display = 'none';
+    }
+    </script>
 
 {% endblock container %}

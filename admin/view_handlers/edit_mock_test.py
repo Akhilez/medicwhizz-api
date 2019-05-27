@@ -16,11 +16,14 @@ class EditMockPage(Page):
         self.db = FirebaseManager.get_instance()
 
     def get_view(self):
-        self.context['mock_test_questions'] = self.get_questions()
-        self.context['mock_test'] = self.get_mock_test_params()
         if self.request.method == 'POST':
             return self.handle_post_request()
+        self.load_data()
         return self.render_view()
+
+    def load_data(self):
+        self.context['mock_test_questions'] = self.get_questions()
+        self.context['mock_test'] = self.get_mock_test_params()
 
     def handle_post_request(self):
         logger.info("Handling post request")
@@ -34,7 +37,8 @@ class EditMockPage(Page):
                     self.context['error'] = f'{response}'
             else:
                 self.context['error'] = 'New question text should not be empty.'
-            return self.render_view()
+        self.load_data()
+        return self.render_view()
 
     def get_mock_test_params(self):
         mock_test = self.db.get_mock_test(self.mock_id)
@@ -57,8 +61,51 @@ class EditMockQuestionPage(Page):
         self.mock_id = mock_test_id
         self.question_id = mock_test_question_id
         self.template_path = 'admin/edit_mock_question.html'
+        self.db = FirebaseManager.get_instance()
         self.context['mock_id'] = mock_test_id
         self.context['question_id'] = mock_test_question_id
+
+    def get_view(self):
+        if self.request.method == 'POST':
+            return self.handle_post_request()
+        self.load_data()
+        return self.render_view()
+
+    def load_data(self):
+        self.context['question'] = dict_to_object(self.db.get_mock_question(self.mock_id, self.question_id).to_dict())
+        self.context['choices'] = self.get_choices()
+
+    def handle_post_request(self):
+        if 'save_details' in self.request.POST:
+            return self.handle_save()
+        if 'add_new_choice' in self.request.POST:
+            return self.handle_new_choice()
+        return self.render_view()
+
+    def handle_new_choice(self):
+        choice_text = self.request.POST.get('new_choice_text')
+        is_choice_correct = self.request.POST.get('new_choice_is_correct')
+        if choice_text:
+            response = self.db.add_new_mock_choice(self.mock_id, self.question_id, choice_text, is_choice_correct)
+            if not isinstance(response, DocumentReference):
+                self.context['error'] = f'{response}'
+        else:
+            self.context['error'] = 'Invalid choice text.'
+        self.load_data()
+        return self.render_view()
+
+    def handle_save(self):
+        # TODO: Implement save question.
+        return self.render_view()
+
+    def get_choices(self):
+        choices_stream = self.db.get_mock_choices(self.mock_id, self.question_id).stream()
+        choices_list = []
+        for choice in choices_stream:
+            choice_dict = choice.to_dict()
+            choice_dict['id'] = choice.id
+            choices_list.append(dict_to_object(choice_dict))
+        return choices_list
 
 
 class AddMockPage(Page):

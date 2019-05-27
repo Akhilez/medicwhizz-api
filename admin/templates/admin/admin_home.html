@@ -1,0 +1,13 @@
+{% extends 'quiz/base.html' %}
+
+{% block container %}
+
+    Hi admin
+
+    Mock test: <br/>
+    {% for test in mock_tests %}
+        <a href="{% url 'admin:edit_mock' test.id %}">{{ test.id }}.</a> {{ test.name }}, price: {{ test.price }}<br/>
+    {% endfor %}
+    <a href="{% url 'admin:add_mock' %}">Add</a>
+
+{% endblock container %}

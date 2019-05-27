@@ -1,0 +1,18 @@
+{% extends 'quiz/base.html' %}
+
+{% block container %}
+
+    Add a new mock test!
+    {{ error }}
+    <form method="post" action="">
+        {% csrf_token %}
+        Name:
+        <input type="text" placeholder="Ex: Mock Test 2" name="name">
+        Price in Indian rupee:
+        <input type="number" step="0.01" placeholder="Ex: 123.43" name="price_india">
+        Price in UK Pounds:
+        <input type="number" step="0.01" placeholder="Ex: 1.3" name="price_uk">
+        <input type="submit" name="add_mock" value="Save">
+    </form>
+
+{% endblock container %}

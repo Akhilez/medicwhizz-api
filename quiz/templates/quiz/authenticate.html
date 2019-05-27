@@ -1,0 +1,20 @@
+{% extends 'quiz/base.html' %}
+{% block nav %} {% endblock nav %}
+{% block container %}
+
+    {% if message %}
+        {{ message }}
+    {% endif %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        Email :
+        <input type="email" name="email">
+        Password:
+        <input type="password" name="password">
+        <input type="submit" value="SignIn" name="sign_in">
+    <button type="button" onclick="location.href='{% url 'quiz:sign_up' %}'">SignUp</button>
+    <a href="{% url 'quiz:reset_password' %}" >Forgot password?</a>
+    </form>
+
+{% endblock container %}

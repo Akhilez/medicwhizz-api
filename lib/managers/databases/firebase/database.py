@@ -3,16 +3,16 @@ from datetime import datetime
 from random import randint
 
 import firebase_admin
-
-from lib.utils import Decorators
-from medicwhizz_web import settings
-from medicwhizz_web.settings import logger
 from firebase_admin import auth
 from firebase_admin import credentials
 from firebase_admin import firestore
-from google.cloud.firestore_v1beta1 import DocumentReference
+from google.cloud.firestore_v1 import DocumentReference
+
 from lib.managers.databases.database import DatabaseManager
 from lib.managers.quiz import QuizState
+from lib.utils import Decorators
+from medicwhizz_web import settings
+from medicwhizz_web.settings import logger
 
 
 class FirebaseManager(DatabaseManager):
@@ -49,7 +49,45 @@ class FirebaseManager(DatabaseManager):
             decoded_token = auth.verify_id_token(id_token)
             return decoded_token['uid']
 
-# ======================== Firestore methods ===========================
+    # ======================== Firestore methods ===========================
+
+    def is_mock_question_present(self, mock_id, index):
+        # TODO: Check if this index already exists in the collection.
+        return False
+
+    def add_question_to_mock_test(self, mock_id, question_text, index=None, explanation=None, choices=None,
+                                  is_update=False):
+        question_dict = {'text': question_text}
+        if index:
+            if is_update or not self.is_mock_question_present(mock_id, index):
+                question_dict['index'] = index
+            else:
+                message = f"Mock question with index {index} already exists"
+                logger.error(message)
+                return message
+        else:
+            question_dict['index'] = self.get_largest_mock_question_index(mock_id) + 1
+        if explanation:
+            question_dict['explanation'] = explanation
+        response = self.db.collection(f'mockTests/{mock_id}/questions').add(question_dict)
+        logger.info(f"Response for adding a question {question_dict} is \n{response}")
+        if len(response) == 2:
+            if choices:
+                choices_response = self.add_choices_to_mock_question(choices, mock_id, response[1].id)
+                if len(choices_response) < 2:
+                    return choices_response
+            return response[1]
+        else:
+            logger.error(f"Failed to add question. Response = {response}")
+            return f'{response}'
+
+    def get_largest_mock_question_index(self, mock_id):
+        # TODO: Get the largest index of mock questions
+        return 1
+
+    def add_choices_to_mock_question(self, choices, mock_id, question_id):
+        # TODO: Add a choices collection to questions.
+        return []
 
     def get_mock_test(self, mock_id):
         mock_test = self.db.document(f'mockTests/{mock_id}').get()
@@ -62,8 +100,8 @@ class FirebaseManager(DatabaseManager):
         :param mock_id: string
         :return: list of questions dict
         """
-        questions_stream = self.db.collection(f'mockTests/{mock_id}/questions')\
-            .where('index', '>=', start_index)\
+        questions_stream = self.db.collection(f'mockTests/{mock_id}/questions') \
+            .where('index', '>=', start_index) \
             .where('index', '<', end_index) \
             .stream()
         return [question for question in questions_stream]

@@ -2,6 +2,8 @@
 
 {% block container %}
 
+    {{ error }}
+
     Hi. You would edit this mock. {{ mock_id }}
 
     Name: <input type="text" name="name" value="{{ mock_test.name }}"><br/><br/>
@@ -22,6 +24,25 @@
         <a href="{% url 'admin:edit_mock_question' mock_id question.id %}">Edit</a><br/>
     {% endfor %}
 
+    <div id="addQuestionForm" style="display: none;">
+        <form action="" method="post">
+            {% csrf_token %}
+            Question Text:
+            <input type="text" placeholder="Question text" name="new_question_text"><br/>
+            <input type="submit" value="Continue" name="add_new_question"><br/>
+            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+        </form>
+    </div>
 
+    <button onclick="openForm()">add</button>
+
+    <script>
+    function openForm() {
+        document.getElementById("addQuestionForm").style.display = "block";
+    }
+    function closeForm() {
+        document.getElementById("addQuestionForm").style.display = "none";
+    }
+    </script>
 
 {% endblock container %}

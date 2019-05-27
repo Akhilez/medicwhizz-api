@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from google.cloud.firestore_v1 import DocumentReference
 
 from lib.managers.databases.firebase.database import FirebaseManager
 from lib.utils import dict_to_object
@@ -17,7 +18,23 @@ class EditMockPage(Page):
     def get_view(self):
         self.context['mock_test_questions'] = self.get_questions()
         self.context['mock_test'] = self.get_mock_test_params()
+        if self.request.method == 'POST':
+            return self.handle_post_request()
         return self.render_view()
+
+    def handle_post_request(self):
+        logger.info("Handling post request")
+        if 'add_new_question' in self.request.POST:
+            question_text = self.request.POST.get('new_question_text')
+            if question_text:
+                response = self.db.add_question_to_mock_test(self.mock_id, question_text=question_text)
+                if isinstance(response, DocumentReference):
+                    return redirect('admin:edit_mock_question', self.mock_id, response.id)
+                else:
+                    self.context['error'] = f'{response}'
+            else:
+                self.context['error'] = 'New question text should not be empty.'
+            return self.render_view()
 
     def get_mock_test_params(self):
         mock_test = self.db.get_mock_test(self.mock_id)

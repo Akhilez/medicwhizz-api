@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 
 from admin.view_handlers.admin_home import AdminHomePage
-from admin.view_handlers.edit_mock_test import AddMockPage, EditMockPage
+from admin.view_handlers.edit_mock_test import AddMockPage, EditMockPage, EditMockQuestionPage
 
 
 def admin_home(request):

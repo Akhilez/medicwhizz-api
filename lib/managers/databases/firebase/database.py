@@ -51,10 +51,27 @@ class FirebaseManager(DatabaseManager):
 
 # ======================== Firestore methods ===========================
 
+    def get_mock_test(self, mock_id):
+        mock_test = self.db.document(f'mockTests/{mock_id}').get()
+        return mock_test
+
+    def get_mock_questions(self, mock_id, start_index=1, end_index=10):
+        """
+        :param start_index: start index
+        :param end_index: one greater than the largest index requested
+        :param mock_id: string
+        :return: list of questions dict
+        """
+        questions_stream = self.db.collection(f'mockTests/{mock_id}/questions')\
+            .where('index', '>=', start_index)\
+            .where('index', '<', end_index) \
+            .stream()
+        return [question for question in questions_stream]
+
     def create_mock_test(self, name, prices):
         response = self.db.collection('mockTests').add({
             'name': name,
-            'prices': prices
+            'price': prices
         })
         if len(response) > 1:
             return response[1]

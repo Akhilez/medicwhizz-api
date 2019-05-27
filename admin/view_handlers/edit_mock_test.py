@@ -1,6 +1,7 @@
 from django.shortcuts import redirect
 
 from lib.managers.databases.firebase.database import FirebaseManager
+from lib.utils import dict_to_object
 from medicwhizz_web.settings import logger
 from quiz.view_handlers.base import Page
 
@@ -11,10 +12,26 @@ class EditMockPage(Page):
         self.template_path = 'admin/edit_mock.html'
         self.mock_id = mock_test_id
         self.context['mock_id'] = mock_test_id
+        self.db = FirebaseManager.get_instance()
 
     def get_view(self):
-        # TODO: Get the questions
+        self.context['mock_test_questions'] = self.get_questions()
+        self.context['mock_test'] = self.get_mock_test_params()
         return self.render_view()
+
+    def get_mock_test_params(self):
+        mock_test = self.db.get_mock_test(self.mock_id)
+        return dict_to_object(mock_test.to_dict())
+
+    def get_questions(self):
+        questions = self.db.get_mock_questions(self.mock_id)
+        questions_list = []
+        for question in questions:
+            question_dict = question.to_dict()
+            question_dict['id'] = question.id
+            questions_list.append(dict_to_object(question_dict))
+            logger.info(f"Question obtained = {question_dict}")
+        return questions_list
 
 
 class EditMockQuestionPage(Page):
@@ -22,7 +39,7 @@ class EditMockQuestionPage(Page):
         super().__init__(request)
         self.mock_id = mock_test_id
         self.question_id = mock_test_question_id
-        self.template_path = ''
+        self.template_path = 'admin/edit_mock_question.html'
         self.context['mock_id'] = mock_test_id
         self.context['question_id'] = mock_test_question_id
 

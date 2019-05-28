@@ -1,8 +1,26 @@
-<html>
+<!doctype html>
+<html lang="en">
 <head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="MedicWhizz is a learning app for medical students.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
+    <link rel="stylesheet" href="{% static 'material/material.min.css' %}">
+    <link rel="stylesheet" href="{% static 'material/app_style.css' %}">
+    <link rel="stylesheet" href="{% static 'app/app_style.css' %}">
+    <title>{% block title %}Medic Whizz{% endblock title %}</title>
+
+    {% block style %} {% endblock %}
 </head>
 
 <body>
@@ -10,15 +28,32 @@
 <!-- Always shows a header, even in smaller screens. -->
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
     {% block nav %}
+        {% include 'quiz/includes/nav.html' %}
     {% endblock nav %}
+
     <main class="mdl-layout__content">
         <div class="page-content">
             {% block container %} {% endblock container %}
         </div>
     </main>
+
+    {% block footer %}
+        {% include 'quiz/includes/footer.html' %}
+    {% endblock footer %}
 </div>
 
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
 
 </body>
 </html>

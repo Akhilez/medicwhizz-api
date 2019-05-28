@@ -15,6 +15,7 @@
           href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
+    <link rel="shortcut icon" type="image/png" href="{% static 'app/images/plabIcon.png' %}"/>
     <link rel="stylesheet" href="{% static 'material/material.min.css' %}">
     <link rel="stylesheet" href="{% static 'material/app_style.css' %}">
     <link rel="stylesheet" href="{% static 'app/app_style.css' %}">
@@ -27,6 +28,7 @@
 
 <!-- Always shows a header, even in smaller screens. -->
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <a name="top"></a>
     {% block nav %}
         {% include 'quiz/includes/nav.html' %}
     {% endblock nav %}

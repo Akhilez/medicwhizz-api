@@ -2,12 +2,37 @@
 
 {% block container %}
 
-    Hi admin
+    <div class="container">
 
-    Mock test: <br/>
-    {% for test in mock_tests %}
-        <a href="{% url 'admin:edit_mock' test.id %}">{{ test.id }}.</a> {{ test.name }}, price: {{ test.price }}<br/>
-    {% endfor %}
-    <a href="{% url 'admin:add_mock' %}">Add</a>
+        <h3 class="mdl-typography--text-left">Mock Tests</h3>
+
+        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <thead>
+            <tr>
+                <th class="mdl-data-table__cell--non-numeric">Name</th>
+                <th>Price in India</th>
+                <th>Price in UK</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for test in mock_tests %}
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">{{ test.name }}</td>
+                    <td>{{ test.price.india }}</td>
+                    <td>{{ test.price.uk }}</td>
+                    <td><a href="{% url 'admin:edit_mock' test.id %}"
+                           class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">View</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4"><a href="{% url 'admin:add_mock' %}"
+                       class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">Add</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
 
 {% endblock container %}

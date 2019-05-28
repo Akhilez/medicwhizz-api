@@ -1,15 +1,22 @@
-<header class="mdl-layout__header">
+{% load static %}
+<div class="android-header mdl-layout__header mdl-layout__header--waterfall">
     <div class="mdl-layout__header-row">
-        <!-- Title -->
-        <span class="mdl-layout-title">Medic Whizz</span>
-        <!-- Add spacer, to align navigation to the right -->
-        <div class="mdl-layout-spacer"></div>
-        <!-- Navigation. We hide it in small screens. -->
-        <nav class="mdl-navigation mdl-layout--large-screen-only">
-            {% if is_admin %}
-                <a class="mdl-navigation__link" href="{% url 'admin:home' %}">Admin</a>
-            {% endif %}
-            <a class="mdl-navigation__link" href="{% url 'quiz:logout' %}">Logout</a>
-        </nav>
+          <span class="android-title mdl-layout-title">
+            <a href="/"><img src="{% static 'app/images/plabIcon.png' %}" alt="medic whizz logo" width="50px"></a>
+          </span>
+        <h1><span class="mdl-navigation__link mdl-layout-title" style="font-size: 22px;">Medic Whizz</span></h1>
+        <!-- Add spacer, to align navigation to the right in desktop -->
+        <div class="android-header-spacer mdl-layout-spacer"></div>
+        <!-- Navigation -->
+        <div>
+            <nav class="android-navigation mdl-navigation">
+                {% if is_admin %}
+                <a class="mdl-navigation__link mdl-typography--text-uppercase" href="{% url 'admin:home' %}">Admin</a>
+                {% endif %}
+                <a class="mdl-navigation__link mdl-typography--text-uppercase" href="{% url 'quiz:logout' %}">Logout</a>
+            </nav>
+        </div>
+        <span class="android-mobile-title mdl-layout-title">
+          </span>
     </div>
-</header>
+</div>

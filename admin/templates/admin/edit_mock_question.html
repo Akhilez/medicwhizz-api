@@ -2,8 +2,95 @@
 
 {% block container %}
 
-    Edit this question.
-    {{ mock_id }}
-    {{ question_id }}
+    <div class="container">
+        <h3>Edit Question</h3>
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="" method="post">
+            {% csrf_token %}
+
+            Question: <textarea name="question_text" class="mdl-textfield__input"
+                                type="text">{{ question.text }}</textarea><br/>
+            Explanation: <textarea name="explanation" class="mdl-textfield__input"
+                                   type="text">{{ question.explanation }}</textarea><br/>
+
+            <h5>Choices:</h5>
+            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                <thead>
+                <tr>
+                    <th class="mdl-data-table__cell--non-numeric">Choice</th>
+                    <th class="mdl-data-table__cell--non-numeric">Correct?</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for choice in choices %}
+                    <tr>
+                        <td><input type="text" name="choice-{{ choice.id }}" value="{{ choice.text }}"
+                                   class="mdl-textfield__input"></td>
+                        <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
+                                   for="isCorrectBox-{{ choice.id }}">
+                            <input type="checkbox" id="isCorrectBox-{{ choice.id }}" class="mdl-checkbox__input"
+                                   name="is_correct_{{ choice.id }}"
+                                    {% if choice.isCorrect %} checked {% endif %}>
+                        </label></td>
+                        <td><a href="#"
+                               class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</a></td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <button onclick="popAddChoice()" id="addNewChoiceButton" type="button"
+                                class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                            Add
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table><br/>
+            <input type="submit" value="Save" name="save_details"
+                   class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+            <br/>
+
+            <div id="add_choice_pop_up" style="display: none;">
+                <h4>Add New Choice</h4>
+                Your unsaved changes will be lost. Please save the changes (if any) before adding a new choice.<br/>
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text"
+                           required>
+                    <label class="mdl-textfield__label" for="newChoiceTextField">Enter New Choice</label>
+                </div>
+                <br/>
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
+                       for="isNewCorrectBox">
+                    <input type="checkbox" id="isNewCorrectBox" class="mdl-checkbox__input"
+                           name="new_choice_is_correct">
+                    <span class="mdl-checkbox__label">Is this choice a correct option?</span>
+                </label><br/><br/>
+                <input type="submit" name="add_new_choice" value="Add"
+                       class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                <button onclick="closePopUp()" type="button"
+                        class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Close
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <script>
+        function popAddChoice() {
+            document.getElementById("add_choice_pop_up").style.display = 'block';
+            document.getElementById("addNewChoiceButton").style.display = 'none';
+        }
+
+        function closePopUp() {
+            document.getElementById("add_choice_pop_up").style.display = 'none';
+            document.getElementById("addNewChoiceButton").style.display = 'block';
+        }
+    </script>
 
 {% endblock container %}

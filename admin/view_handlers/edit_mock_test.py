@@ -31,11 +31,26 @@ class EditMockPage(Page):
             return self.handle_new_question()
         if 'delete_mock' in self.request.POST:
             return self.handle_delete_mock()
+        if 'delete_mock_question' in self.request.POST:
+            return self.handle_delete_mock_question()
+        self.load_data()
+        return self.render_view()
+
+    def handle_delete_mock_question(self):
+        question_id = self.request.POST.get('delete_mock_question_id')
+        if question_id:
+            response = self.db.delete_mock_question(self.mock_id, question_id)
+            if isinstance(response, Exception):
+                self.context['error'] = response
+        else:
+            self.context['error'] = 'invalid question id'
         self.load_data()
         return self.render_view()
 
     def handle_delete_mock(self):
         response = self.db.delete_mock_test(self.mock_id)
+        if isinstance(response, Exception):
+            self.context['error'] = response
         logger.info(f'{response}')
         self.load_data()
         return self.render_view()

@@ -3,6 +3,9 @@
 {% block container %}
 
     <div class="container" style="margin-top: 16px">
+        <div style="margin-top: 24px">
+            <a href="{% url 'admin:home' %}">Admin</a> > Mock Test
+        </div>
         <h3>Edit Mock Test</h3>
         {% if error %}
             <div class="alert alert-danger" role="alert">
@@ -43,9 +46,9 @@
                         </button>
                     </td>
                 </tr>
-            </table>
-            <hr/>
+            </table> <hr/>
 
+            <h5>Questions</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
                 <thead>
                 <tr>

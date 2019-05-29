@@ -3,6 +3,9 @@
 {% block container %}
 
     <div class="container">
+        <div style="margin-top: 24px">
+            <a href="{% url 'admin:home' %}">Admin</a> > Add Mock Test
+        </div>
         {% if error %}
             <div class="alert alert-danger" role="alert">
                 {{ error }}

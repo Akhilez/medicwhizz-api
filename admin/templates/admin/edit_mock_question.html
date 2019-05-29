@@ -3,6 +3,10 @@
 {% block container %}
 
     <div class="container">
+        <div style="margin-top: 24px">
+            <a href="{% url 'admin:home' %}">Admin</a> >
+            <a href="{% url 'admin:edit_mock' mock_id %}">Mock Test</a> > Question
+        </div>
         <h3>Edit Question</h3>
         {% if error %}
             <div class="alert alert-danger" role="alert">
@@ -64,8 +68,7 @@
                 <h4>Add New Choice</h4>
                 Your unsaved changes will be lost. Please save the changes (if any) before adding a new choice.<br/>
                 <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text"
-                           required>
+                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text">
                     <label class="mdl-textfield__label" for="newChoiceTextField">Enter New Choice</label>
                 </div>
                 <br/>

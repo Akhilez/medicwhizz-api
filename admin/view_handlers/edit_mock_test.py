@@ -51,9 +51,10 @@ class EditMockPage(Page):
         response = self.db.delete_mock_test(self.mock_id)
         if isinstance(response, Exception):
             self.context['error'] = response
+            self.load_data()
+            return self.render_view()
         logger.info(f'{response}')
-        self.load_data()
-        return self.render_view()
+        return redirect('admin:home')
 
     def handle_new_question(self):
         question_text = self.request.POST.get('new_question_text')
@@ -109,7 +110,17 @@ class EditMockQuestionPage(Page):
             return self.handle_save()
         if 'add_new_choice' in self.request.POST:
             return self.handle_new_choice()
+        if 'delete_mock_question' in self.request.POST:
+            return self.handle_delete_question()
         return self.render_view()
+
+    def handle_delete_question(self):
+        response = self.db.delete_mock_question(self.mock_id, self.question_id)
+        if isinstance(response, Exception):
+            self.context['error'] = response
+            self.load_data()
+            return self.render_view()
+        return redirect('admin:edit_mock', self.mock_id)
 
     def handle_new_choice(self):
         choice_text = self.request.POST.get('new_choice_text')

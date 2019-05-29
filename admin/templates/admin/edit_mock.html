@@ -110,7 +110,7 @@
                 </div>
                 <div class="mdl-dialog__actions">
                     <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
-                    <input hidden id="questionIdHidden" name="delete_mock_question_id">
+                    <input type="text" hidden id="questionIdHidden" name="delete_mock_question_id">
                     <button type="submit" class="mdl-button" name="delete_mock_question">Yes</button>
                 </div>
             </dialog>
@@ -134,7 +134,6 @@
 
         function openDeleteQuestionDialog(questionId, questionText) {
             deletingQuestionId = questionId;
-            alert(deletingQuestionId);
             document.getElementById("questionDialog").innerHTML = "Are you that you want to delete the question - " + questionText + "?";
             document.getElementById("questionIdHidden").value = questionId;
             let deleteQuestionDialog = document.querySelector("#deleteQuestionDialog");
@@ -144,7 +143,6 @@
         function openDeleteMockDialog() {
             let dialog = document.querySelector("#deleteMockDialog");
             dialog.showModal();
-            $("#deleteQuestionDialog").close();
         }
 
         function closeDialogs() {

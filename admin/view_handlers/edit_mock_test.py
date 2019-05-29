@@ -28,15 +28,29 @@ class EditMockPage(Page):
     def handle_post_request(self):
         logger.info("Handling post request")
         if 'add_new_question' in self.request.POST:
-            question_text = self.request.POST.get('new_question_text')
-            if question_text:
-                response = self.db.add_question_to_mock_test(self.mock_id, question_text=question_text)
-                if isinstance(response, DocumentReference):
-                    return redirect('admin:edit_mock_question', self.mock_id, response.id)
-                else:
-                    self.context['error'] = f'{response}'
+            return self.handle_new_question()
+        if 'delete_mock' in self.request.POST:
+            return self.handle_delete_mock()
+        self.load_data()
+        return self.render_view()
+
+    def handle_delete_mock(self):
+        response = self.db.delete_mock_test(self.mock_id)
+        logger.info(f'{response}')
+        self.load_data()
+        return self.render_view()
+
+    def handle_new_question(self):
+        question_text = self.request.POST.get('new_question_text')
+        if question_text:
+            response = self.db.add_question_to_mock_test(self.mock_id, question_text=question_text)
+            if isinstance(response, DocumentReference):
+                return redirect('admin:edit_mock_question', self.mock_id, response.id)
             else:
-                self.context['error'] = 'New question text should not be empty.'
+                self.context['error'] = f'{response}'
+        else:
+            self.context['error'] = 'New question text should not be empty.'
+
         self.load_data()
         return self.render_view()
 

@@ -29,3 +29,7 @@ def sign_up(request):
 
 def reset_password(request):
     return ResetPasswordPage(request).get_view()
+
+
+def start_quiz(request, mock_id):
+    return PreQuizPage(request, mock_id).get_view()

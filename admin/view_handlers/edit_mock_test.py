@@ -112,6 +112,19 @@ class EditMockQuestionPage(Page):
             return self.handle_new_choice()
         if 'delete_mock_question' in self.request.POST:
             return self.handle_delete_question()
+        if 'delete_mock_choice' in self.request.POST:
+            return self.handle_delete_choice()
+        return self.render_view()
+
+    def handle_delete_choice(self):
+        choice_id = self.request.POST.get('delete_mock_choice_id')
+        if choice_id:
+            response = self.db.delete_mock_choice(self.mock_id, self.question_id, choice_id)
+            if isinstance(response, Exception):
+                self.context['error'] = response
+        else:
+            self.context['error'] = 'Choice id must be valid'
+        self.load_data()
         return self.render_view()
 
     def handle_delete_question(self):

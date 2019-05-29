@@ -51,6 +51,14 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
+    def delete_mock_choice(self, mock_id, question_id, choice_id):
+        try:
+            response = self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').delete()
+            return response
+        except Exception as e:
+            logger.error(e)
+            return e
+
     def delete_mock_question(self, mock_id, question_id):
         """
         1. get all the choices and delete each

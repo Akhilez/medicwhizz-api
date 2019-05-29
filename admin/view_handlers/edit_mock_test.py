@@ -28,15 +28,45 @@ class EditMockPage(Page):
     def handle_post_request(self):
         logger.info("Handling post request")
         if 'add_new_question' in self.request.POST:
-            question_text = self.request.POST.get('new_question_text')
-            if question_text:
-                response = self.db.add_question_to_mock_test(self.mock_id, question_text=question_text)
-                if isinstance(response, DocumentReference):
-                    return redirect('admin:edit_mock_question', self.mock_id, response.id)
-                else:
-                    self.context['error'] = f'{response}'
+            return self.handle_new_question()
+        if 'delete_mock' in self.request.POST:
+            return self.handle_delete_mock()
+        if 'delete_mock_question' in self.request.POST:
+            return self.handle_delete_mock_question()
+        self.load_data()
+        return self.render_view()
+
+    def handle_delete_mock_question(self):
+        question_id = self.request.POST.get('delete_mock_question_id')
+        if question_id:
+            response = self.db.delete_mock_question(self.mock_id, question_id)
+            if isinstance(response, Exception):
+                self.context['error'] = response
+        else:
+            self.context['error'] = 'invalid question id'
+        self.load_data()
+        return self.render_view()
+
+    def handle_delete_mock(self):
+        response = self.db.delete_mock_test(self.mock_id)
+        if isinstance(response, Exception):
+            self.context['error'] = response
+            self.load_data()
+            return self.render_view()
+        logger.info(f'{response}')
+        return redirect('admin:home')
+
+    def handle_new_question(self):
+        question_text = self.request.POST.get('new_question_text')
+        if question_text:
+            response = self.db.add_question_to_mock_test(self.mock_id, question_text=question_text)
+            if isinstance(response, DocumentReference):
+                return redirect('admin:edit_mock_question', self.mock_id, response.id)
             else:
-                self.context['error'] = 'New question text should not be empty.'
+                self.context['error'] = f'{response}'
+        else:
+            self.context['error'] = 'New question text should not be empty.'
+
         self.load_data()
         return self.render_view()
 
@@ -80,7 +110,30 @@ class EditMockQuestionPage(Page):
             return self.handle_save()
         if 'add_new_choice' in self.request.POST:
             return self.handle_new_choice()
+        if 'delete_mock_question' in self.request.POST:
+            return self.handle_delete_question()
+        if 'delete_mock_choice' in self.request.POST:
+            return self.handle_delete_choice()
         return self.render_view()
+
+    def handle_delete_choice(self):
+        choice_id = self.request.POST.get('delete_mock_choice_id')
+        if choice_id:
+            response = self.db.delete_mock_choice(self.mock_id, self.question_id, choice_id)
+            if isinstance(response, Exception):
+                self.context['error'] = response
+        else:
+            self.context['error'] = 'Choice id must be valid'
+        self.load_data()
+        return self.render_view()
+
+    def handle_delete_question(self):
+        response = self.db.delete_mock_question(self.mock_id, self.question_id)
+        if isinstance(response, Exception):
+            self.context['error'] = response
+            self.load_data()
+            return self.render_view()
+        return redirect('admin:edit_mock', self.mock_id)
 
     def handle_new_choice(self):
         choice_text = self.request.POST.get('new_choice_text')

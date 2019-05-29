@@ -3,6 +3,10 @@
 {% block container %}
 
     <div class="container">
+        <div style="margin-top: 24px">
+            <a href="{% url 'admin:home' %}">Admin</a> >
+            <a href="{% url 'admin:edit_mock' mock_id %}">Mock Test</a> > Question
+        </div>
         <h3>Edit Question</h3>
         {% if error %}
             <div class="alert alert-danger" role="alert">
@@ -37,8 +41,8 @@
                                    name="is_correct_{{ choice.id }}"
                                     {% if choice.isCorrect %} checked {% endif %}>
                         </label></td>
-                        <td><a href="#"
-                               class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</a></td>
+                        <td><button type="button" onclick="deleteChoice('{{ choice.id }}', '{{ choice.text }}')"
+                               class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</button></td>
                     </tr>
                 {% endfor %}
                 <tr>
@@ -50,17 +54,21 @@
                     </td>
                 </tr>
                 </tbody>
-            </table><br/>
+            </table>
+            <br/>
             <input type="submit" value="Save" name="save_details"
                    class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+            <button type="button" name="delete_doc" onclick="openDeleteQuestionDialog()"
+                    class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"
+                    style="margin-top: 16px">Delete
+            </button>
             <br/>
 
             <div id="add_choice_pop_up" style="display: none;">
                 <h4>Add New Choice</h4>
                 Your unsaved changes will be lost. Please save the changes (if any) before adding a new choice.<br/>
                 <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text"
-                           required>
+                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text">
                     <label class="mdl-textfield__label" for="newChoiceTextField">Enter New Choice</label>
                 </div>
                 <br/>
@@ -77,6 +85,33 @@
                 </button>
             </div>
 
+            <!-- -------------------- Delete question Dialog ----------------- -->
+            <dialog class="mdl-dialog" id="deleteQuestionDialog">
+                <h4 class="mdl-dialog__title">Delete mock test?</h4>
+                <div class="mdl-dialog__content">
+                    <p>
+                        Are you that you want to delete question - {{ question.text }}?
+                    </p>
+                </div>
+                <div class="mdl-dialog__actions">
+                    <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
+                    <button type="submit" class="mdl-button" name="delete_mock_question">Yes</button>
+                </div>
+            </dialog>
+
+            <!-- -------------------- Delete choice Dialog ----------------- -->
+            <dialog class="mdl-dialog" id="deleteChoiceDialog">
+                <h4 class="mdl-dialog__title">Delete choice?</h4>
+                <div class="mdl-dialog__content">
+                    <p id="choiceDialog"></p>
+                </div>
+                <div class="mdl-dialog__actions">
+                    <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
+                    <input hidden type="text" id="choiceIdHidden" name="delete_mock_choice_id">
+                    <button type="submit" class="mdl-button" name="delete_mock_choice">Yes</button>
+                </div>
+            </dialog>
+
         </form>
 
     </div>
@@ -90,6 +125,28 @@
         function closePopUp() {
             document.getElementById("add_choice_pop_up").style.display = 'none';
             document.getElementById("addNewChoiceButton").style.display = 'block';
+        }
+
+        let deletingChoice = null;
+        function deleteChoice(choiceId, choiceText) {
+            deletingChoice = choiceId;
+            document.getElementById("choiceDialog").innerHTML = "Are you that you want to delete the choice - " + choiceText + "?";
+            document.getElementById("choiceIdHidden").value = choiceId;
+            let choiceDialog = document.querySelector("#deleteChoiceDialog");
+            choiceDialog.showModal();
+        }
+
+        function openDeleteQuestionDialog() {
+            let dialog = document.querySelector("#deleteQuestionDialog");
+            dialog.showModal();
+        }
+
+        function closeDialogs() {
+            let questionDialog = document.querySelector("#deleteQuestionDialog");
+            questionDialog.close();
+            let choiceDialog = document.querySelector("#deleteChoiceDialog");
+            choiceDialog.close();
+            deletingChoice = null;
         }
     </script>
 

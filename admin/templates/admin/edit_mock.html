@@ -3,6 +3,9 @@
 {% block container %}
 
     <div class="container" style="margin-top: 16px">
+        <div style="margin-top: 24px">
+            <a href="{% url 'admin:home' %}">Admin</a> > Mock Test
+        </div>
         <h3>Edit Mock Test</h3>
         {% if error %}
             <div class="alert alert-danger" role="alert">
@@ -36,10 +39,16 @@
                     <td><input type="submit" value="Save" name="save_doc"
                                class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect"
                                style="margin-top: 16px"></td>
+                    <td>
+                        <button type="button" name="delete_doc" onclick="openDeleteMockDialog()"
+                                class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"
+                                style="margin-top: 16px">Delete
+                        </button>
+                    </td>
                 </tr>
-            </table>
-            <hr/>
+            </table> <hr/>
 
+            <h5>Questions</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
                 <thead>
                 <tr>
@@ -56,7 +65,10 @@
                         <td class="mdl-data-table__cell--non-numeric">{{ question.explanation }}</td>
                         <td><a href="{% url 'admin:edit_mock_question' mock_id question.id %}"
                                class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">Edit</a>
-                            <a href="#" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</a>
+                            <button type="button"
+                                    onclick="openDeleteQuestionDialog('{{ question.id }}', '{{ question.text }}')"
+                                    class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -79,6 +91,33 @@
                     style="margin-top: 16px;" id="add_new_question_button">add
             </button>
 
+            <!-- -------------------- Delete mock Dialog ----------------- -->
+            <dialog class="mdl-dialog" id="deleteMockDialog">
+                <h4 class="mdl-dialog__title">Delete mock test?</h4>
+                <div class="mdl-dialog__content">
+                    <p>
+                        Are you that you want to delete mock test named {{ mock_test.name }}?
+                    </p>
+                </div>
+                <div class="mdl-dialog__actions">
+                    <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
+                    <button type="submit" class="mdl-button" name="delete_mock">Yes</button>
+                </div>
+            </dialog>
+
+            <!-- -------------------- Delete mock Dialog ----------------- -->
+            <dialog class="mdl-dialog" id="deleteQuestionDialog">
+                <h4 class="mdl-dialog__title">Delete question?</h4>
+                <div class="mdl-dialog__content">
+                    <p id="questionDialog"></p>
+                </div>
+                <div class="mdl-dialog__actions">
+                    <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
+                    <input type="text" hidden id="questionIdHidden" name="delete_mock_question_id">
+                    <button type="submit" class="mdl-button" name="delete_mock_question">Yes</button>
+                </div>
+            </dialog>
+
 
         </form>
     </div>
@@ -92,6 +131,29 @@
         function closeForm() {
             document.getElementById("addQuestionForm").style.display = "none";
             document.getElementById("add_new_question_button").style.display = "block";
+        }
+
+        let deletingQuestionId = null;
+
+        function openDeleteQuestionDialog(questionId, questionText) {
+            deletingQuestionId = questionId;
+            document.getElementById("questionDialog").innerHTML = "Are you that you want to delete the question - " + questionText + "?";
+            document.getElementById("questionIdHidden").value = questionId;
+            let deleteQuestionDialog = document.querySelector("#deleteQuestionDialog");
+            deleteQuestionDialog.showModal();
+        }
+
+        function openDeleteMockDialog() {
+            let dialog = document.querySelector("#deleteMockDialog");
+            dialog.showModal();
+        }
+
+        function closeDialogs() {
+            let deleteMockDialog = document.querySelector("#deleteMockDialog");
+            deleteMockDialog.close();
+            let deleteQuestionDialog = document.querySelector("#deleteQuestionDialog");
+            deleteQuestionDialog.close();
+            deletingQuestionId = null;
         }
     </script>
 

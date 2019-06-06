@@ -23,7 +23,7 @@ class HomePage(Page):
             test_dict = test.to_dict()
             test_dict['id'] = test.id
             test_dict['locked'] = self.is_test_locked()
-            test_dict['local_price'] = self.get_local_price(test['price'])
+            test_dict['local_price'] = self.get_local_price(test_dict['price'])
             mock_tests_list.append(test_dict)
         return mock_tests_list
 
@@ -31,4 +31,4 @@ class HomePage(Page):
         return True  # TODO: Get this from user's purchase info
 
     def get_local_price(self, price_dict):
-        return price_dict['indian']  # TODO: Get the country of user
+        return price_dict['india']  # TODO: Get the country of user

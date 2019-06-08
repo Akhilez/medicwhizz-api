@@ -51,6 +51,9 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
+    def get_mock_answers(self, player_id, quiz_state_id):
+        return self.db.collection(f'users/{player_id}/matches/mocks/{quiz_state_id}').stream()
+
     def init_mock_quiz(self, player_id, mock_id, start_time):
         mock_quiz_dict = {
             'startTime': start_time,
@@ -63,7 +66,8 @@ class FirebaseManager(DatabaseManager):
             logger.error(f'Failed to add new quiz. {response}')
         return f'{response}'
 
-    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_id, question_reference, choice_reference, is_correct):
+    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, is_correct):
+        # TODO: If an answer at index exists, then update that answer.
         answer_dict = {
             'index': index,
             'questionId': question_reference,
@@ -82,7 +86,8 @@ class FirebaseManager(DatabaseManager):
         questions_list = [question for question in questions]
         if len(questions_list) > 1:
             logger.error(f"Found more than one question at index: {index}")
-        return questions_list[0]
+        elif len(questions_list) == 1:
+            return questions_list[0]
 
     def get_mock_choice(self, mock_id, question_id, choice_id):
         return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()

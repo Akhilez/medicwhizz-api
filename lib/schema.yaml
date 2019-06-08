@@ -68,6 +68,7 @@ collections:
             - question: /questions/ID
               choice: /questions/ID/choices/ID
         mocks: # document
+          maxTries: 5
           mockId: # Collection
             - startTime: timestamp
               lastUpdated: timestamp
@@ -85,6 +86,7 @@ collections:
   mockTests: # Col
     - name: Mock 1
       duration: 7000  # seconds
+      numQuestions: 50
       price:  # Map
         india: 0 #rupees
         uk: 0 #pounds

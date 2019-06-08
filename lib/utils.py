@@ -36,3 +36,17 @@ def dict_to_object(data):
 def _json_object_hook(d):
     from collections import namedtuple
     return namedtuple('node', d.keys())(*d.values())
+
+
+def datetime_to_timestamp(date_time):
+    from datetime import datetime
+    return str(datetime.timestamp(date_time))
+
+
+def timestamp_to_datetime(timestamp):
+    """
+    :param timestamp: "1545730073.46456"
+    :return: datetime object
+    """
+    from datetime import datetime
+    return datetime.fromtimestamp(float(timestamp))

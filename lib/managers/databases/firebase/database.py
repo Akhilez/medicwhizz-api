@@ -51,6 +51,47 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
+    def get_mock_answers(self, player_id, quiz_state_id):
+        return self.db.collection(f'users/{player_id}/matches/mocks/{quiz_state_id}').stream()
+
+    def init_mock_quiz(self, player_id, mock_id, start_time):
+        mock_quiz_dict = {
+            'startTime': start_time,
+            'lastUpdated': start_time,
+        }
+        response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}').add(mock_quiz_dict)
+        if len(response) == 2 and isinstance(response[1], DocumentReference):
+            return response[1]
+        else:
+            logger.error(f'Failed to add new quiz. {response}')
+        return f'{response}'
+
+    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, is_correct):
+        # TODO: If an answer at index exists, then update that answer.
+        answer_dict = {
+            'index': index,
+            'questionId': question_reference,
+            'choiceId': choice_reference,
+            'isCorrect': is_correct
+        }
+        response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').add(answer_dict)
+        if len(response) == 2 and isinstance(response[1], DocumentReference):
+            return response[1]
+        else:
+            logger.error(f'Failed to add new quiz. {response}')
+        return f'{response}'
+
+    def get_mock_question_from_index(self, mock_id, index):
+        questions = self.db.collection(f'mockTests/{mock_id}/questions').where('index', '==', index).stream()
+        questions_list = [question for question in questions]
+        if len(questions_list) > 1:
+            logger.error(f"Found more than one question at index: {index}")
+        elif len(questions_list) == 1:
+            return questions_list[0]
+
+    def get_mock_choice(self, mock_id, question_id, choice_id):
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()
+
     def delete_mock_choice(self, mock_id, question_id, choice_id):
         try:
             response = self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').delete()
@@ -155,12 +196,10 @@ class FirebaseManager(DatabaseManager):
         return []
 
     def get_mock_question(self, mock_id, question_id):
-        question = self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
-        return question
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
 
     def get_mock_test(self, mock_id):
-        mock_test = self.db.document(f'mockTests/{mock_id}').get()
-        return mock_test
+        return self.db.document(f'mockTests/{mock_id}').get()
 
     def get_mock_questions(self, mock_id, start_index=1, end_index=10):
         """
@@ -174,6 +213,9 @@ class FirebaseManager(DatabaseManager):
             .where('index', '<', end_index) \
             .stream()
         return [question for question in questions_stream]
+
+    def get_mock_questions_reference(self, mock_id):
+        return self.db.collection(f'mockTests/{mock_id}/questions')
 
     def create_mock_test(self, name, prices):
         response = self.db.collection('mockTests').add({
@@ -218,7 +260,7 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def create_quiz(self, player_id, quiz_type):
-        self.db.collection('users/' + player_id + '/matches/' + quiz_type + '/matches').add({
+        self.db.collection(f'users/{player_id}/matches/{quiz_type}/matches').add({
             'answers': [],
             'questions': [],
             'score': 0,
@@ -239,7 +281,7 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def get_quiz_state(self, quiz_id, player_id, quiz_type):
-        state = self.db.document('users/' + player_id + '/matches/' + quiz_type + '/matches/' + quiz_id).get()
+        state = self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').get()
         return FirebaseQuizState(state)
 
     @Decorators.try_and_catch

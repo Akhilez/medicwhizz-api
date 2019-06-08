@@ -67,6 +67,17 @@ collections:
           questions: # COL
             - question: /questions/ID
               choice: /questions/ID/choices/ID
+        mocks: # document
+          maxTries: 5
+          mockId: # Collection
+            - startTime: timestamp
+              lastUpdated: timestamp
+              answers: # Collection
+                - index: question index
+                  questionId: question reference
+                  choiceId: choice reference
+                  isCorrect: is choice correct?
+
   groups:
     - name: group name
       permissions: ['all']
@@ -74,6 +85,8 @@ collections:
         - uid: uid
   mockTests: # Col
     - name: Mock 1
+      duration: 7000  # seconds
+      numQuestions: 50
       price:  # Map
         india: 0 #rupees
         uk: 0 #pounds

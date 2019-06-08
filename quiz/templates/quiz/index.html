@@ -2,6 +2,22 @@
 
 {% block container %}
 
-    Welcome
+    <div class="container">
+        <h3>Mock Tests</h3>
+
+        {% for mock_test in mock_tests %}
+
+            <div>
+                {% if mock_test.locked %}
+                    LOCKED
+                {% endif %}
+                {{ mock_test.name }}
+                {{ mock_test.local_price }}
+                <a href="{% url 'quiz:start' mock_test.id %}">Start</a>
+            </div>
+
+        {% endfor %}
+
+    </div>
 
 {% endblock container %}

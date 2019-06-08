@@ -3,7 +3,26 @@
 {% block nav %} {% endblock nav %}
 
 {% block container %}
+    <div class="container">
+        <h1>Medic Whizz</h1>
+        <h3>Question {{ question.number }} of {{ num_questions }}</h3>
 
-    Quiz started
+        <p>{{ question.text }}</p>
+
+        <form method="post" action="">
+            {% csrf_token %}
+            <h3>Choices:</h3>
+            {% for choice in question.choices %}
+                <input type="radio" name="choice" value="{{ choice.id }}">{{ choice.text }}<br/>
+            {% endfor %}
+            <input type="submit" name="save_answer" value="{% if is_last_question %}FINISH{% else %}SAVE{% endif %}">
+
+            <div>
+                {% for status in question_status %}
+                    <button type="submit" name="change_question" value="{{ status.id }}">{{ status.number }}</button>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
 
 {% endblock container %}

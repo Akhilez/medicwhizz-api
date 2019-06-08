@@ -1,4 +1,8 @@
 {% extends 'quiz/base.html' %}
 {% block container %}
-Ready for quiz? Here are the rules. <button>Start</button>
+Ready for quiz? Here are the rules.
+    <form action="" method="post">
+    {% csrf_token %}
+        <button type="submit" name="start_quiz">Start</button>
+    </form>
 {% endblock container %}

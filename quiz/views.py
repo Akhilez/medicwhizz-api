@@ -4,6 +4,7 @@ from lib.utils import Decorators
 from quiz.view_handlers import auth_pages
 from quiz.view_handlers.auth_pages import LoginPage, SignUpPage, ResetPasswordPage
 from quiz.view_handlers.home_page import HomePage
+from quiz.view_handlers.quiz_handler import PreQuizPage, MockQuizPage
 
 
 def redirect_to_home(request):
@@ -33,3 +34,7 @@ def reset_password(request):
 
 def start_quiz(request, mock_id):
     return PreQuizPage(request, mock_id).get_view()
+
+
+def mock_quiz(request):
+    return MockQuizPage(request).get_view()

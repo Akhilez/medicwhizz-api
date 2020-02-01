@@ -66,13 +66,25 @@ class FirebaseManager(DatabaseManager):
             logger.error(f'Failed to add new quiz. {response}')
         return f'{response}'
 
+    def update_quiz_last_updated_timestamp(self, player_id, mock_id, timestamp):
+        mock_quiz_dict = {
+            'lastUpdated': timestamp,
+        }
+        response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}').add(mock_quiz_dict)
+        if len(response) == 2 and isinstance(response[1], DocumentReference):
+            return response[1]
+        else:
+            logger.error(f'Failed to update last updated timestamp. {response}')
+        return f'{response}'
+
     def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, is_correct):
         # TODO: If an answer at index exists, then update that answer.
         answer_dict = {
             'index': index,
             'questionId': question_reference,
             'choiceId': choice_reference,
-            'isCorrect': is_correct
+            'isCorrect': is_correct,
+            'timestamp': datetime.now(),
         }
         response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').add(answer_dict)
         if len(response) == 2 and isinstance(response[1], DocumentReference):

@@ -19,11 +19,15 @@ class HomePage(Page):
     def get_mock_tests(self):
         mock_tests_list = []
         tests = self.db.list_mock_tests()
+        running_quiz_id = self.check_running_quizzes()
         for test in tests:
             test_dict = test.to_dict()
             test_dict['id'] = test.id
             test_dict['locked'] = self.is_test_locked()
             test_dict['local_price'] = self.get_local_price(test_dict['price'])
+            test_dict['local_country'] = 'India'  # TODO: Get the country of the user
+            if running_quiz_id == test.id:
+                test_dict['running'] = True
             mock_tests_list.append(test_dict)
         return mock_tests_list
 
@@ -32,3 +36,6 @@ class HomePage(Page):
 
     def get_local_price(self, price_dict):
         return price_dict['india']  # TODO: Get the country of user
+
+    def check_running_quizzes(self):
+        return self.request.session.get('mock_id')

@@ -35,7 +35,8 @@ class PreQuizPage(Page):
         return self.render_view()
 
     def add_quiz_to_db(self, start_time):
-        quiz_reference = self.db.init_mock_quiz(self.user['localId'], self.mock_id, start_time)
+        quiz_reference = self.db.init_mock_quiz(self.user['localId'], self.mock_id,
+                                                utils.timestamp_to_datetime(start_time))
         return quiz_reference.id
 
 
@@ -46,7 +47,7 @@ class MockQuizPage(Page):
         self.mock_id = request.session.get('mock_id')
         self.db = FirebaseManager.get_instance()
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
-        self.start_time = utils.timestamp_to_datetime(request.session.get('start_time'))
+        self.start_time = utils.timestamp_to_datetime(request.session.get('start_time', 0))
         self.current_question_number = request.session.get('current_question_number', 1)
         self.time_limit = request.session.get('time_limit')
         self.num_questions = request.session.get('num_questions')
@@ -56,7 +57,10 @@ class MockQuizPage(Page):
         status = self.validate_session()
         if not status.is_valid:
             self.context['error'] = status.message
-            return self.render_view()
+            if status.code == 2:  # Time is up!
+                return self.render_view()
+            elif status.code == 1:  # INVALID MOCK QUIZ
+                return redirect('quiz:home')
         if self.request.method == 'POST':
             if 'save_answer' in self.request.POST:
                 return self.handle_save_answer()
@@ -66,11 +70,14 @@ class MockQuizPage(Page):
         return self.render_view()
 
     def validate_session(self):
-        status = {'is_valid': False, 'message': '404'}
+        logger.info(f"Session in Mock: ${dict(self.request.session)}")
+        status = {'is_valid': False, 'message': '404', 'code': 0}
         if not self.request.session.get('mock_id'):
             status['message'] = 'Mock ID not found'
+            status['code'] = 1
         elif self.get_time_diff() > self.time_limit:
             status['message'] = "Time's up!"
+            status['code'] = 2
         else:
             status['is_valid'] = True
         return utils.dict_to_object(status)
@@ -79,13 +86,19 @@ class MockQuizPage(Page):
         return (datetime.now() - self.start_time).total_seconds()
 
     def handle_save_answer(self):
+        self.update_last_updated()
         self.answer_choice(self.request.POST.get('choice'))
+        if self.current_question_number == self.num_questions:  # The quiz is finished
+            self.add_finishing_data()
+            self.clear_session_quiz_data()
+            return redirect('quiz:quiz_results', self.quiz_state_id)
+
         self.current_question_number += 1
         self.load_data()
         return self.render_view()
 
     def answer_choice(self, choice_id):
-        question = self.db.get_mock_question_from_index(self.current_question_number)
+        question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
         choice = self.db.get_mock_choice(self.mock_id, question.id, choice_id)
         self.db.answer_mock_question(
             player_id=self.user['localId'],
@@ -93,25 +106,27 @@ class MockQuizPage(Page):
             mock_id=self.mock_id,
             index=self.current_question_number,
             question_reference=question.reference,
-            choice_reference=choice.refernce,
-            is_correct=choice.get('isCorrect', False)
+            choice_reference=choice.reference,
+            is_correct=choice.get('isCorrect')
         )
 
     def handle_change_question(self):
         question_number = self.request.POST.get('change_question')
         if question_number:
             self.request.session['current_question_number'] = question_number
+        self.update_last_updated()
         self.load_data()
         return self.render_view()
 
     def load_data(self):
-        self.request.session['last_updated'] = utils.datetime_to_timestamp(datetime.now())
         context = {
             'num_questions': self.num_questions,
             'question': utils.dict_to_object(self.get_question_dict()),
             'question_status': utils.dict_to_object(self.get_question_status()),
+            'is_last_question': self.num_questions == self.current_question_number,
         }
         self.context.update(context)
+        self.request.session['current_question_number'] = self.current_question_number
 
     def get_question_dict(self):
         question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
@@ -138,3 +153,29 @@ class MockQuizPage(Page):
                 'is_answered': False
             })
         return answers
+
+    def clear_session_quiz_data(self):
+        cleared_keys = (
+            'mock_id',
+            'current_quiz',
+            'start_time',
+            'time_limit',
+            'num_questions',
+            'quiz_state_id',
+            'current_question_number'
+        )
+        for key in cleared_keys:
+            del self.request.session[key]
+
+    def add_finishing_data(self):
+        # TODO: Add metadata of quiz to the db. Like how many points did they score, etc.
+        pass
+
+    def update_last_updated(self):
+        try:
+            timestamp = datetime.now()
+            self.request.session['last_updated'] = utils.datetime_to_timestamp(timestamp)
+            self.db.update_quiz_last_updated_timestamp(self.user['localId'], self.mock_id, timestamp)
+        except Exception as e:
+            logger.error(f"Error during updating the last updated timestamp. {e}")
+

@@ -7,13 +7,31 @@
 
         {% for mock_test in mock_tests %}
 
-            <div>
-                {% if mock_test.locked %}
-                    LOCKED
-                {% endif %}
-                {{ mock_test.name }}
-                {{ mock_test.local_price }}
-                <a href="{% url 'quiz:start' mock_test.id %}">Start</a>
+            <div class="demo-card-wide mdl-card mdl-shadow--2dp">
+                <div class="mdl-card__title">
+                    <h2 class="mdl-card__title-text">{{ mock_test.name }}</h2>
+                </div>
+                <div class="mdl-card__supporting-text">
+                    Price: {{ mock_test.local_price }}
+                </div>
+                <div class="mdl-card__actions mdl-card--border">
+                    {% if mock_test.running %}
+                        <a href="{% url 'quiz:mock' %}"
+                           class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                            Resume
+                        </a>
+                    {% else %}
+                        <a href="{% url 'quiz:start' mock_test.id %}"
+                           class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                            Start
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="mdl-card__menu">
+                    {% if mock_test.locked %}
+                        <i class="material-icons">lock</i>
+                    {% endif %}
+                </div>
             </div>
 
         {% endfor %}

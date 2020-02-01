@@ -1,4 +1,5 @@
 from django.conf.urls import url
+from django.urls import path
 
 from quiz import views
 
@@ -15,4 +16,5 @@ urlpatterns = [
     url(r'^reset_password/', views.reset_password, name='reset_password'),
     url(r'^start/([A-Za-z0-9]+)/$', views.start_quiz, name='start'),
     url(r'^mock/$', views.mock_quiz, name='mock'),
+    path('quiz_results/<str:quiz_id>', views.quiz_results, name='quiz_results'),
 ]

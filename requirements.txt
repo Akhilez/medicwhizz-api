@@ -2,3 +2,4 @@ firebase-admin==2.16.0
 Django==2.2.8
 Pyrebase==3.0.27
 requests==2.22.0
+gunicorn==20.0.4

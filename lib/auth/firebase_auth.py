@@ -99,7 +99,7 @@ class FirebaseAuth:
     @staticmethod
     def initialize_firebase_app():
         if CURRENT_ENV == DEV_ENV:
-            return pyrebase.initialize_app(credentials.dev_credentials)
+            return pyrebase.initialize_app(credentials.dev_credentials)  # TODO: Create these credentials
         elif CURRENT_ENV == PROD_ENV:
             return pyrebase.initialize_app(credentials.prod_credentials)
         else:

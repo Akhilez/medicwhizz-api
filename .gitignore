@@ -9,3 +9,5 @@ temp/
 db.sqlite3
 *.log
 *.log.*
+env.py
+.env

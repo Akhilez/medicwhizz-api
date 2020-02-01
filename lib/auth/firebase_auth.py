@@ -51,6 +51,9 @@ class FirebaseAuth:
         is_auth = FirebaseManager.get_instance().is_authenticated(id_token)
         if is_auth:
             self.user = self.initialize_user_auth_details(id_token)
+            if not self.user['emailVerified']:
+                logger.warning(f"Email not verified for user ${self.user.email}")
+                self.auth.send_email_verification(id_token)
             return self.user['emailVerified']
 
     def refresh_id_token(self, id_token):
@@ -99,7 +102,7 @@ class FirebaseAuth:
     @staticmethod
     def initialize_firebase_app():
         if CURRENT_ENV == DEV_ENV:
-            return pyrebase.initialize_app(credentials.dev_credentials)  # TODO: Create these credentials
+            return pyrebase.initialize_app(credentials.dev_credentials)
         elif CURRENT_ENV == PROD_ENV:
             return pyrebase.initialize_app(credentials.prod_credentials)
         else:

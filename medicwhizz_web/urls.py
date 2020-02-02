@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 from quiz import views as app_views
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -23,3 +24,5 @@ urlpatterns = [
     path('admin/', include('admin.urls', namespace='admin')),
     path('', app_views.redirect_to_home),
 ]
+
+urlpatterns += staticfiles_urlpatterns()

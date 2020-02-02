@@ -85,7 +85,7 @@ class MockQuizPage(Page):
         return utils.dict_to_object(status)
 
     def get_time_diff(self):
-        return (datetime.now() - self.start_time).total_seconds()
+        return (datetime.now() - self.start_time).total_seconds() / 60
 
     def handle_save_answer(self):
         self.update_last_updated()

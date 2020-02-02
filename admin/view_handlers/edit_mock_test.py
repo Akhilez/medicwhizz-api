@@ -27,6 +27,8 @@ class EditMockPage(Page):
 
     def handle_post_request(self):
         logger.info("Handling post request")
+        if 'save_mock_quiz_attributes' in self.request.POST:
+            return self.handle_save_attributes()
         if 'add_new_question' in self.request.POST:
             return self.handle_new_question()
         if 'delete_mock' in self.request.POST:
@@ -84,6 +86,18 @@ class EditMockPage(Page):
             logger.info(f"Question obtained = {question_dict}")
         return questions_list
 
+    def handle_save_attributes(self):
+        attributes = {
+            'name': self.request.POST.get('name'),
+            'index': int(self.request.POST.get('index', 0)),
+            'duration': self.request.POST.get('duration'),
+            'price': {country: self.request.POST.get(f'price_{country}') for country in ('india', 'uk')},
+        }
+        self.db.update_mock_quiz_attributes(self.mock_id, attributes)
+        self.context['message'] = "Saved quiz successfully."
+        self.load_data()
+        return self.render_view()
+
 
 class EditMockQuestionPage(Page):
     def __init__(self, request, mock_test_id, mock_test_question_id):
@@ -139,7 +153,8 @@ class EditMockQuestionPage(Page):
         choice_text = self.request.POST.get('new_choice_text')
         is_choice_correct = self.request.POST.get('new_choice_is_correct')
         if choice_text:
-            response = self.db.add_new_mock_choice(self.mock_id, self.question_id, choice_text, is_choice_correct)
+            choice_dict = {'text': choice_text, 'isCorrect': is_choice_correct, 'index': 0}
+            response = self.db.add_new_mock_choice(self.mock_id, self.question_id, choice_dict)
             if not isinstance(response, DocumentReference):
                 self.context['error'] = f'{response}'
         else:
@@ -148,7 +163,15 @@ class EditMockQuestionPage(Page):
         return self.render_view()
 
     def handle_save(self):
-        # TODO: Implement save question.
+        attributes = {
+            'text': self.request.POST.get('question_text'),
+            'index': int(self.request.POST.get('question_index', 0)),
+            'explanation': self.request.POST.get('explanation'),
+        }
+        self.db.update_mock_question_attributes(self.mock_id, self.question_id, attributes)
+        self.save_choices(self.get_choices_from_html())
+        self.context['message'] = "Question saved successfully."
+        self.load_data()
         return self.render_view()
 
     def get_choices(self):
@@ -159,6 +182,31 @@ class EditMockQuestionPage(Page):
             choice_dict['id'] = choice.id
             choices_list.append(dict_to_object(choice_dict))
         return choices_list
+
+    def save_choices(self, choices):
+        for choice_id in choices:
+            if choice_id in ('1', '2', '3', '4'):
+                self.db.add_new_mock_choice(self.mock_id, self.question_id, choices[choice_id])
+            else:
+                self.db.update_mock_choices(self.mock_id, self.question_id, choice_id, choices[choice_id])
+
+    def get_choices_from_html(self):
+        choice_ids = []
+        for key in self.request.POST:
+            if 'choice-' in key:
+                choice_ids.append(key[7:])
+        logger.info(f"Choice Ids found = {choice_ids}")
+        choices = {}
+        for choice_id in choice_ids:
+            choice_text = self.request.POST.get(f'choice-{choice_id}')
+            if len(choice_text) == 0:
+                continue
+            choices[choice_id] = {
+                'index': int(self.request.POST.get(f'choiceIndex-{choice_id}', 0)),
+                'text': choice_text,
+                'isCorrect': bool(self.request.POST.get(f'is_correct_{choice_id}', False)),
+            }
+        return choices
 
 
 class AddMockPage(Page):

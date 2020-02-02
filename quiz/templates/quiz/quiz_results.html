@@ -1,6 +1,32 @@
 {% extends 'quiz/base.html' %}
 {% block container %}
     <div class="container">
-        Your quiz information:
+
+        <h1>{{ quiz.name }}</h1>
+        {{ quiz.date }}
+        {{ quiz.start_time }}-{{ quiz.end_time }} ({{ time_elapsed }})
+        Score {{ quiz.score }}
+        {{ comments }}
+        <h3>Questions</h3>
+        {% for question in quiz.questions %}
+
+            {{ question }}
+            {% for choice in question.choices %}
+                {% if choice.isCorrect %}
+                    Correct!
+                {% elif not choice.hasScored %}
+                    Wrong!
+                {% endif %}
+                {% if choice.isChoosen %}
+                    <div style="background: #00bfa5">{{ choice }}</div>
+                {% else %}
+                    {{ choice }}
+                {% endif %}
+            {% endfor %}
+            Explanation:
+            {{ question.explanation }}
+            <hr/>
+
+        {% endfor %}
     </div>
 {% endblock container %}

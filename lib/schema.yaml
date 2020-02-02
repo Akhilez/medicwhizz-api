@@ -18,6 +18,7 @@ collections:
       choices:  # Col
         - text: Option 1
           isCorrect: False
+          index: 212
       explanation: explanation
       attemptCount: 34
       correctAttempts: 24
@@ -76,7 +77,7 @@ collections:
                 - index: question index
                   questionId: question reference
                   choiceId: choice reference
-                  isCorrect: is choice correct?
+                  hasScored: is choice correct?
 
   groups:
     - name: group name
@@ -85,6 +86,7 @@ collections:
         - uid: uid
   mockTests: # Col
     - name: Mock 1
+      index: 2
       duration: 7000  # seconds
       numQuestions: 50
       price:  # Map
@@ -96,4 +98,5 @@ collections:
           choices: # Col
             - text: Correct option
               isCorrect: true
+              index: 2
           explanation: String

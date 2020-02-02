@@ -12,6 +12,11 @@
                 {{ error }}
             </div>
         {% endif %}
+        {% if message %}
+            <div class="alert alert-warning" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
         <form action="" method="post">
             {% csrf_token %}
 
@@ -19,6 +24,16 @@
                 <tr>
                     <td>Name:</td>
                     <td><input type="text" name="name" value="{{ mock_test.name }}" class="mdl-textfield__input"></td>
+                </tr>
+                <tr>
+                    <td>Index:</td>
+                    <td><input type="number" name="index" value="{{ mock_test.index }}" class="mdl-textfield__input">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Duration: (minutes)</td>
+                    <td><input type="number" name="duration" value="{{ mock_test.duration }}"
+                               class="mdl-textfield__input"></td>
                 </tr>
                 <tr>
                     <td><b>Price:</b></td>
@@ -36,7 +51,7 @@
                                value="{{ mock_test.price.uk }}"></td>
                 </tr>
                 <tr>
-                    <td><input type="submit" value="Save" name="save_doc"
+                    <td><input type="submit" value="Save" name="save_mock_quiz_attributes"
                                class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect"
                                style="margin-top: 16px"></td>
                     <td>
@@ -46,7 +61,8 @@
                         </button>
                     </td>
                 </tr>
-            </table> <hr/>
+            </table>
+            <hr/>
 
             <h5>Questions</h5>
             <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">

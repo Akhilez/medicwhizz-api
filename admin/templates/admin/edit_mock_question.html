@@ -1,8 +1,14 @@
 {% extends 'quiz/base.html' %}
 
+{% load static %}
+
+{% block scripts %}
+    <script src="{% static 'admin/scripts/admin.js' %}"></script>
+{% endblock scripts %}
+
 {% block container %}
 
-    <div class="container">
+    <div id="questionEditorSection" class="container">
         <div style="margin-top: 24px">
             <a href="{% url 'admin:home' %}">Admin</a> >
             <a href="{% url 'admin:edit_mock' mock_id %}">Mock Test</a> > Question
@@ -13,38 +19,66 @@
                 {{ error }}
             </div>
         {% endif %}
+        {% if message %}
+            <div class="alert alert-warning" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
 
         <form action="" method="post">
             {% csrf_token %}
 
+            Index: <input type="number" name="question_index" class="mdl-textfield__input" value="{{ question.index }}"><br/>
             Question: <textarea name="question_text" class="mdl-textfield__input"
                                 type="text">{{ question.text }}</textarea><br/>
             Explanation: <textarea name="explanation" class="mdl-textfield__input"
                                    type="text">{{ question.explanation }}</textarea><br/>
 
             <h5>Choices:</h5>
-            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <table id="choices_table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
                 <thead>
                 <tr>
+                    <th class="mdl-data-table__cell--non-numeric">Index</th>
                     <th class="mdl-data-table__cell--non-numeric">Choice</th>
                     <th class="mdl-data-table__cell--non-numeric">Correct?</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for choice in choices %}
-                    <tr>
-                        <td><input type="text" name="choice-{{ choice.id }}" value="{{ choice.text }}"
-                                   class="mdl-textfield__input"></td>
-                        <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
-                                   for="isCorrectBox-{{ choice.id }}">
-                            <input type="checkbox" id="isCorrectBox-{{ choice.id }}" class="mdl-checkbox__input"
-                                   name="is_correct_{{ choice.id }}"
-                                    {% if choice.isCorrect %} checked {% endif %}>
-                        </label></td>
-                        <td><button type="button" onclick="deleteChoice('{{ choice.id }}', '{{ choice.text }}')"
-                               class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</button></td>
-                    </tr>
-                {% endfor %}
+                {% if choices|length > 0 %}
+                    {% for choice in choices %}
+                        <tr>
+                            <td><input type="number" name="choiceIndex-{{ choice.id }}" value="{{ choice.index }}"
+                                       class="mdl-textfield__input"></td>
+                            <td><input type="text" name="choice-{{ choice.id }}" value="{{ choice.text }}"
+                                       class="mdl-textfield__input"></td>
+                            <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
+                                       for="isCorrectBox-{{ choice.id }}">
+                                <input type="checkbox" id="isCorrectBox-{{ choice.id }}" class="mdl-checkbox__input"
+                                       name="is_correct_{{ choice.id }}"
+                                        {% if choice.isCorrect %} checked {% endif %}>
+                            </label></td>
+                            <td>
+                                <button type="button" onclick="deleteChoice('{{ choice.id }}', '{{ choice.text }}')"
+                                        class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    {% for choice_id in "1234" %}
+                        <tr>
+                            <td><input type="number" name="choiceIndex-{{ choice_id }}" value="{{ choice_id }}"
+                                       class="mdl-textfield__input"></td>
+                            <td><input type="text" name="choice-{{ choice_id }}" value=""
+                                       class="mdl-textfield__input"></td>
+                            <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
+                                       for="isCorrectBox-{{ choice_id }}">
+                                <input type="checkbox" id="isCorrectBox-{{ choice_id }}" class="mdl-checkbox__input"
+                                       name="is_correct_{{ choice_id }}">
+                            </label></td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
                 <tr>
                     <td class="mdl-data-table__cell--non-numeric">
                         <button onclick="popAddChoice()" id="addNewChoiceButton" type="button"
@@ -85,12 +119,30 @@
                 </button>
             </div>
 
+            <hr/>
+
+            <div id="addQuestionForm" style="display: none;">
+                <h5>Add New Question</h5>
+                <textarea class="mdl-textfield__input" type="text" id="new_question_text"
+                          placeholder="Your question goes here..." name="new_question_text"></textarea><br/>
+                <input type="submit" value="Continue" name="add_new_question"
+                       class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                <button type="button" onclick="closeNewQuestionForm()"
+                        class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Close
+                </button>
+            </div>
+
+            <button onclick="openNewQuestionForm()" type="button"
+                    class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect"
+                    style="margin-top: 16px;" id="add_new_question_button">add another question
+            </button>
+
             <!-- -------------------- Delete question Dialog ----------------- -->
             <dialog class="mdl-dialog" id="deleteQuestionDialog">
-                <h4 class="mdl-dialog__title">Delete mock test?</h4>
+                <h4 class="mdl-dialog__title">Delete question?</h4>
                 <div class="mdl-dialog__content">
                     <p>
-                        Are you that you want to delete question - {{ question.text }}?
+                        Are you sure that you want to delete question - {{ question.text }}?
                     </p>
                 </div>
                 <div class="mdl-dialog__actions">
@@ -128,6 +180,7 @@
         }
 
         let deletingChoice = null;
+
         function deleteChoice(choiceId, choiceText) {
             deletingChoice = choiceId;
             document.getElementById("choiceDialog").innerHTML = "Are you that you want to delete the choice - " + choiceText + "?";
@@ -147,6 +200,16 @@
             let choiceDialog = document.querySelector("#deleteChoiceDialog");
             choiceDialog.close();
             deletingChoice = null;
+        }
+
+        function openNewQuestionForm() {
+            document.getElementById("addQuestionForm").style.display = "block";
+            document.getElementById("add_new_question_button").style.display = "none";
+        }
+
+        function closeNewQuestionForm() {
+            document.getElementById("addQuestionForm").style.display = "none";
+            document.getElementById("add_new_question_button").style.display = "block";
         }
     </script>
 

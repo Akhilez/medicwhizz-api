@@ -107,7 +107,7 @@ class MockQuizPage(Page):
             index=self.current_question_number,
             question_reference=question.reference,
             choice_reference=choice.reference,
-            is_correct=choice.get('isCorrect')
+            has_scored=choice.get('isCorrect')
         )
 
     def handle_change_question(self):
@@ -142,6 +142,7 @@ class MockQuizPage(Page):
     def get_question_status(self):
         answers = []
         answers_stream = self.db.get_mock_answers(self.user['localId'], self.quiz_state_id)
+        # TODO: Investigate this
         for answer in answers_stream:
             answers.append({
                 'number': answer['index'],
@@ -168,14 +169,28 @@ class MockQuizPage(Page):
             del self.request.session[key]
 
     def add_finishing_data(self):
-        # TODO: Add metadata of quiz to the db. Like how many points did they score, etc.
-        pass
+        end_time = datetime.now()
+        score, out_of = self.get_score()
+        finishing_data = {
+            'end_time': end_time,
+            'elapsed_time': end_time - utils.timestamp_to_datetime(self.start_time),
+            'score': score,
+            'score_max_end': out_of
+        }
+        self.db.update_quiz_state(self.user['localId'], self.mock_id, finishing_data)
 
     def update_last_updated(self):
         try:
             timestamp = datetime.now()
             self.request.session['last_updated'] = utils.datetime_to_timestamp(timestamp)
-            self.db.update_quiz_last_updated_timestamp(self.user['localId'], self.mock_id, timestamp)
+            self.db.update_quiz_state(self.user['localId'], self.mock_id, {'lastUpdated': timestamp})
         except Exception as e:
             logger.error(f"Error during updating the last updated timestamp. {e}")
+
+    def get_score(self):
+        answers = self.db.get_mock_quiz_answers(self.user['localId'], self.mock_id, self.quiz_state_id)
+        answers = [answer.to_dict() for answer in answers]
+        score = sum(1 if answer.get('hasScored', False) else 0 for answer in answers)
+        return score, len(answers)
+
 

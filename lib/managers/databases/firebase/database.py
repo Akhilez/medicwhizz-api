@@ -49,9 +49,16 @@ class FirebaseManager(DatabaseManager):
             decoded_token = auth.verify_id_token(id_token)
             return decoded_token['uid']
 
+    def validate_response(self, response):
+        if len(response) == 2 and isinstance(response[1], DocumentReference):
+            return response[1]
+        else:
+            logger.error(f'Failed to add new quiz. {response}')
+        return str(response)
+
     # ======================== Firestore methods ===========================
 
-    def get_mock_answers(self, player_id, quiz_state_id):
+    def get_mock_answers(self, player_id, quiz_state_id):  # TODO: WARNING Duplicate and no mock_id
         return self.db.collection(f'users/{player_id}/matches/mocks/{quiz_state_id}').stream()
 
     def init_mock_quiz(self, player_id, mock_id, start_time):
@@ -60,38 +67,27 @@ class FirebaseManager(DatabaseManager):
             'lastUpdated': start_time,
         }
         response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}').add(mock_quiz_dict)
-        if len(response) == 2 and isinstance(response[1], DocumentReference):
-            return response[1]
-        else:
-            logger.error(f'Failed to add new quiz. {response}')
-        return f'{response}'
+        return self.validate_response(response)
 
-    def update_quiz_last_updated_timestamp(self, player_id, mock_id, timestamp):
-        mock_quiz_dict = {
-            'lastUpdated': timestamp,
-        }
-        response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}').add(mock_quiz_dict)
-        if len(response) == 2 and isinstance(response[1], DocumentReference):
-            return response[1]
-        else:
-            logger.error(f'Failed to update last updated timestamp. {response}')
-        return f'{response}'
+    def update_quiz_state(self, player_id, mock_id, pairs):
+        return self.db.document(f'users/{player_id}/matches/mocks/{mock_id}').update(pairs)
 
-    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, is_correct):
+    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, has_scored):
         # TODO: If an answer at index exists, then update that answer.
         answer_dict = {
             'index': index,
             'questionId': question_reference,
             'choiceId': choice_reference,
-            'isCorrect': is_correct,
+            'hasScored': has_scored,
             'timestamp': datetime.now(),
         }
         response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').add(answer_dict)
-        if len(response) == 2 and isinstance(response[1], DocumentReference):
-            return response[1]
-        else:
-            logger.error(f'Failed to add new quiz. {response}')
-        return f'{response}'
+        return self.validate_response(response)
+
+    def get_mock_quiz_answers(self, player_id, mock_id, quiz_state_id):
+        answers = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
+        answers = [answer for answer in answers]
+        return answers
 
     def get_mock_question_from_index(self, mock_id, index):
         questions = self.db.collection(f'mockTests/{mock_id}/questions').where('index', '==', index).stream()
@@ -101,8 +97,14 @@ class FirebaseManager(DatabaseManager):
         elif len(questions_list) == 1:
             return questions_list[0]
 
+    def update_mock_question_attributes(self, mock_id, question_id, pairs):
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').update(pairs)
+
     def get_mock_choice(self, mock_id, question_id, choice_id):
         return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()
+
+    def update_mock_choices(self, mock_id, question_id, choice_id, pairs):
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').update(pairs)
 
     def delete_mock_choice(self, mock_id, question_id, choice_id):
         try:
@@ -158,16 +160,15 @@ class FirebaseManager(DatabaseManager):
         logger.info(f'Questions deleted = {questions_deleted}')
         return questions_deleted
 
-    def add_new_mock_choice(self, mock_id, question_id, choice_text, is_correct):
-        choices_dict = {'text': str(choice_text), 'isCorrect': bool(is_correct)}
-        response = self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').add(choices_dict)
+    def add_new_mock_choice(self, mock_id, question_id, choice_dict):
+        response = self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').add(choice_dict)
         if len(response) == 2:
             if isinstance(response[1], DocumentReference):
                 return response[1]
         return f'{response}'
 
     def get_mock_choices(self, mock_id, question_id):
-        return self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices')
+        return self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').order_by(u'index')
 
     def is_mock_question_present(self, mock_id, index):
         # TODO: Check if this index already exists in the collection.
@@ -201,7 +202,7 @@ class FirebaseManager(DatabaseManager):
 
     def get_largest_mock_question_index(self, mock_id):
         # TODO: Get the largest index of mock questions
-        return 1
+        return 0
 
     def add_choices_to_mock_question(self, choices, mock_id, question_id):
         # TODO: Add a choices collection to questions.
@@ -213,6 +214,9 @@ class FirebaseManager(DatabaseManager):
     def get_mock_test(self, mock_id):
         return self.db.document(f'mockTests/{mock_id}').get()
 
+    def update_mock_quiz_attributes(self, mock_id, pairs):
+        return self.db.document(f'mockTests/{mock_id}').update(pairs)
+
     def get_mock_questions(self, mock_id, start_index=1, end_index=10):
         """
         :param start_index: start index
@@ -223,16 +227,18 @@ class FirebaseManager(DatabaseManager):
         questions_stream = self.db.collection(f'mockTests/{mock_id}/questions') \
             .where('index', '>=', start_index) \
             .where('index', '<', end_index) \
+            .order_by(u'index') \
             .stream()
         return [question for question in questions_stream]
 
     def get_mock_questions_reference(self, mock_id):
         return self.db.collection(f'mockTests/{mock_id}/questions')
 
-    def create_mock_test(self, name, prices):
+    def create_mock_test(self, name, prices, index=1):
         response = self.db.collection('mockTests').add({
             'name': name,
-            'price': prices
+            'price': prices,
+            'index': index,
         })
         if len(response) > 1:
             return response[1]

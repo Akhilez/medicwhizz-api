@@ -4,9 +4,9 @@ set -x
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR
 
-PROJECT_ID="medicwhizz_web"
-IMAGE_NAME="medicwhizz_web"
-CLOUD_RUN_SERVICE="medicwhizz_web"
+PROJECT_ID="certain-bonito-267003"
+IMAGE_NAME="plabmaster_web"
+CLOUD_RUN_SERVICE="plabmaster_web"
 
 gcloud builds submit --tag gcr.io/$PROJECT_ID/$IMAGE_NAME:v1 $DIR
 

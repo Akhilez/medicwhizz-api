@@ -58,8 +58,8 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
-    def get_mock_answers(self, player_id, quiz_state_id):  # TODO: WARNING Duplicate and no mock_id
-        return self.db.collection(f'users/{player_id}/matches/mocks/{quiz_state_id}').stream()
+    def get_quiz_state_answers(self, player_id, mock_id, quiz_state_id):
+        return self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
 
     def init_mock_quiz(self, player_id, mock_id, start_time):
         mock_quiz_dict = {
@@ -69,8 +69,8 @@ class FirebaseManager(DatabaseManager):
         response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}').add(mock_quiz_dict)
         return self.validate_response(response)
 
-    def update_quiz_state(self, player_id, mock_id, pairs):
-        return self.db.document(f'users/{player_id}/matches/mocks/{mock_id}').update(pairs)
+    def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs):
+        return self.db.document(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}').update(pairs)
 
     def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference, has_scored):
         # TODO: If an answer at index exists, then update that answer.
@@ -127,6 +127,7 @@ class FirebaseManager(DatabaseManager):
                 result.append(response)
             response = self.db.document(f'mockTests/{mock_id}/questions/{question_id}').delete()
             result.append(response)
+            self.increment_mock_num_questions(mock_id, -1)
         except Exception as e:
             logger.error(e)
             logger.info(f'Result of deletion = {result}')
@@ -190,6 +191,7 @@ class FirebaseManager(DatabaseManager):
             question_dict['explanation'] = explanation
         response = self.db.collection(f'mockTests/{mock_id}/questions').add(question_dict)
         logger.info(f"Response for adding a question {question_dict} is \n{response}")
+        self.increment_mock_num_questions(mock_id, 1)
         if len(response) == 2:
             if choices:
                 choices_response = self.add_choices_to_mock_question(choices, mock_id, response[1].id)
@@ -207,6 +209,9 @@ class FirebaseManager(DatabaseManager):
     def add_choices_to_mock_question(self, choices, mock_id, question_id):
         # TODO: Add a choices collection to questions.
         return []
+
+    def increment_mock_num_questions(self, mock_id, increment_value):
+        self.db.document(f'mockTests/{mock_id}').update({'numQuestions': firestore.Increment(increment_value)})
 
     def get_mock_question(self, mock_id, question_id):
         return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
@@ -239,6 +244,7 @@ class FirebaseManager(DatabaseManager):
             'name': name,
             'price': prices,
             'index': index,
+            'numQuestions': 0,
         })
         if len(response) > 1:
             return response[1]

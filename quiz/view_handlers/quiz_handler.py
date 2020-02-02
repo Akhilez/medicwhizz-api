@@ -49,7 +49,7 @@ class MockQuizPage(Page):
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
         self.start_time = utils.timestamp_to_datetime(request.session.get('start_time', 0))
         self.current_question_number = request.session.get('current_question_number', 1)
-        self.time_limit = request.session.get('time_limit')
+        self.time_limit = float(request.session.get('time_limit', 60))
         self.num_questions = request.session.get('num_questions')
         self.quiz_state_id = request.session.get('quiz_state_id')
 
@@ -58,6 +58,8 @@ class MockQuizPage(Page):
         if not status.is_valid:
             self.context['error'] = status.message
             if status.code == 2:  # Time is up!
+                self.add_finishing_data()
+                self.clear_session_quiz_data()
                 return self.render_view()
             elif status.code == 1:  # INVALID MOCK QUIZ
                 return redirect('quiz:home')
@@ -141,11 +143,11 @@ class MockQuizPage(Page):
 
     def get_question_status(self):
         answers = []
-        answers_stream = self.db.get_mock_answers(self.user['localId'], self.quiz_state_id)
+        answers_stream = self.db.get_quiz_state_answers(self.user['localId'], self.mock_id, self.quiz_state_id)
         # TODO: Investigate this
         for answer in answers_stream:
             answers.append({
-                'number': answer['index'],
+                'number': answer.to_dict()['index'],
                 'is_answered': True
             })
         for i in range(self.num_questions - len(answers)):
@@ -166,24 +168,27 @@ class MockQuizPage(Page):
             'current_question_number'
         )
         for key in cleared_keys:
-            del self.request.session[key]
+            try:
+                del self.request.session[key]
+            except Exception as e:
+                logger.error(e)
 
     def add_finishing_data(self):
         end_time = datetime.now()
         score, out_of = self.get_score()
         finishing_data = {
             'end_time': end_time,
-            'elapsed_time': end_time - utils.timestamp_to_datetime(self.start_time),
+            'elapsed_time': (end_time - self.start_time).total_seconds(),
             'score': score,
             'score_max_end': out_of
         }
-        self.db.update_quiz_state(self.user['localId'], self.mock_id, finishing_data)
+        self.db.update_quiz_state(self.user['localId'], self.mock_id, self.quiz_state_id, finishing_data)
 
     def update_last_updated(self):
         try:
             timestamp = datetime.now()
             self.request.session['last_updated'] = utils.datetime_to_timestamp(timestamp)
-            self.db.update_quiz_state(self.user['localId'], self.mock_id, {'lastUpdated': timestamp})
+            self.db.update_quiz_state(self.user['localId'], self.mock_id, self.quiz_state_id, {'lastUpdated': timestamp})
         except Exception as e:
             logger.error(f"Error during updating the last updated timestamp. {e}")
 

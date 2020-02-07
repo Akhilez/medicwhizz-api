@@ -27,18 +27,15 @@ class PreQuizPage(Page):
                     'mock_id': self.mock_id,
                     'current_quiz': self.mock_id,
                     'start_time': start_time,
+                    'last_updated': start_time,
                     'time_limit': mock_test_dict['duration'],
                     'num_questions': mock_test_dict['numQuestions'],
-                    'quiz_state_id': self.add_quiz_to_db(start_time),
                 }
+                attempt_ref = self.db.init_mock_quiz(self.user_id, self.mock_id, utils.timestamp_to_datetime(start_time))
+                quiz_data['quiz_state_id'] = attempt_ref.id
                 self.request.session.update(quiz_data)
                 return redirect('quiz:mock')
         return self.render_view()
-
-    def add_quiz_to_db(self, start_time):
-        quiz_reference = self.db.init_mock_quiz(self.user_id, self.mock_id,
-                                                utils.timestamp_to_datetime(start_time))
-        return quiz_reference.id
 
 
 class MockQuizPage(Page):
@@ -104,16 +101,25 @@ class MockQuizPage(Page):
         return self.render_view()
 
     def answer_choice(self, choice_id):
-        question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
-        choice = self.db.get_mock_choice(self.mock_id, question.id, choice_id)
+        # Get the question from session
+        question_ref_string = self.request.session['current_question_dict']['id']
+        question = self.db.get_document_reference(question_ref_string)
+
+        # Get the selected choice from session
+        selected_choice = None
+        for choice in self.request.session['current_question_dict']['choices']:
+            if choice['id'] == choice_id:
+                selected_choice = choice
+
+        # Update the database with the selected question
         self.db.answer_mock_question(
             player_id=self.user_id,
             quiz_state_id=self.quiz_state_id,
             mock_id=self.mock_id,
             index=self.current_question_number,
-            question_reference=question.reference,
-            choice_reference=choice.reference,
-            has_scored=choice.get('isCorrect')
+            question_reference=question,
+            choice_reference=self.db.get_document_reference(selected_choice),
+            has_scored=bool(selected_choice.get('isCorrect'))
         )
 
     def handle_change_question(self):
@@ -125,18 +131,21 @@ class MockQuizPage(Page):
         return self.render_view()
 
     def load_data(self):
+        question_dict = self.get_question_dict()
         context = {
             'num_questions': self.num_questions,
-            'question': utils.dict_to_object(self.get_question_dict()),
+            'question': utils.dict_to_object(question_dict),
             'question_status': utils.dict_to_object(self.get_question_status()),
             'is_last_question': self.num_questions == self.current_question_number,
         }
+        self.request.session['current_question_dict'] = question_dict
         self.context.update(context)
         self.request.session['current_question_number'] = self.current_question_number
 
     def get_question_dict(self):
         question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
         question_dict = question.to_dict()
+        question_dict['id'] = question.id
         question_dict['choices'] = []
         choices_stream = self.db.get_mock_choices(self.mock_id, question.id).stream()
         for choice in choices_stream:
@@ -148,7 +157,7 @@ class MockQuizPage(Page):
     def get_question_status(self):
         answers = []
         answers_stream = self.db.get_quiz_state_answers(self.user_id, self.mock_id, self.quiz_state_id)
-        # TODO: Investigate this
+        # TODO: MAINTAIN THE STATE WITHIN SESSION VARIABLE!!!!!
         for answer in answers_stream:
             answers.append({
                 'number': answer.to_dict()['index'],

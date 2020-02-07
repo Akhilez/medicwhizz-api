@@ -46,10 +46,10 @@ collections:
             numAnswersCorrect: 34
             numQuestionsAnswered: 122
       matches:  # Collection
-        - quizId:  # Document
-          type: mockTests.id
+        - quizId: mockTests.id  # Document
+          type: mock
           maxTries: 5
-          mockId: mock
+          mockId: mockTests.id
           attempts:  # Collection
             - startTime: timestamp
               lastUpdated: timestamp

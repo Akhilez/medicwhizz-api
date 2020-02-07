@@ -36,6 +36,7 @@ def start_quiz(request, mock_id):
     return PreQuizPage(request, mock_id).get_view()
 
 
+@Decorators.firebase_login_required
 def mock_quiz(request):
     return MockQuizPage(request).get_view()
 

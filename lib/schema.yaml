@@ -46,12 +46,25 @@ collections:
             numAnswersCorrect: 34
             numQuestionsAnswered: 122
       matches:  # Collection
-        quick:  # Document
-          matches:  # Collection
-            - score: 12
+        - quizId:  # Document
+          type: mockTests.id
+          maxTries: 5
+          mockId: mock
+          attempts:  # Collection
+            - startTime: timestamp
+              lastUpdated: timestamp
+              answers:  # Collection
+                - index: question index
+                  questionId: question reference
+                  choiceId: choice reference
+                  hasScored: is choice correct?
+        - quizId:  # Document
+          type: quick
+          attempts:  # Collection
+            - score: 12  # Document
               startTime: 1 July 2018 at 15:59:11 UTC+5:30
               endTime: 1 July 2018 at 15:59:11 UTC+5:30
-              questionRecords: # Col
+              questionRecords:  # Col
                 - question: /questions/ID
                   choice: /questions/ID/choices/ID
                   questionNumber: 1
@@ -60,7 +73,9 @@ collections:
                   isCorrect: true
           answeredQuestions: # Col
             - questionId: /questions/ID
-        full:  # Document
+        - quizId:  # Document
+          type: full
+          attempts:
           elapsedTime: 160
           lastIndex: 43
           score: 6
@@ -68,16 +83,6 @@ collections:
           questions: # COL
             - question: /questions/ID
               choice: /questions/ID/choices/ID
-        mocks: # document
-          maxTries: 5
-          mockId: # Collection
-            - startTime: timestamp
-              lastUpdated: timestamp
-              answers: # Collection
-                - index: question index
-                  questionId: question reference
-                  choiceId: choice reference
-                  hasScored: is choice correct?
 
   groups:
     - name: group name

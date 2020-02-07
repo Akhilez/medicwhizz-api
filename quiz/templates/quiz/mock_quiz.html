@@ -1,6 +1,6 @@
 {% extends 'quiz/base.html' %}
 
-{% block nav %} {% endblock nav %}
+{% block nav %} {% include 'quiz/includes/quiz_nav.html' %} {% endblock nav %}
 
 {% block container %}
     <div class="container">
@@ -12,9 +12,13 @@
 
         <form method="post" action="">
             {% csrf_token %}
-            <h3>Choices:</h3>
+            <p class="mdl-typography--subhead">Choices:</p>
             {% for choice in question.choices %}
-                <input type="radio" name="choice" value="{{ choice.id }}" required>{{ choice.text }}<br/>
+                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-{{ choice.id }}">
+                    <input type="radio" id="option-{{ choice.id }}" class="mdl-radio__button" name="choice"
+                           value="{{ choice.id }}">
+                    <span class="mdl-radio__label">{{ choice.text }}</span>
+                </label><br/>
             {% endfor %}
             <input type="submit" name="save_answer" value="{% if is_last_question %}FINISH{% else %}SAVE{% endif %}">
 
@@ -25,7 +29,36 @@
                     </button>
                 {% endfor %}
             </div>
+
+
+            <dialog class="mdl-dialog">
+                <h4 class="mdl-dialog__title">Finish Quiz?</h4>
+                <div class="mdl-dialog__content">
+                    <p>
+                        Do you want to save all your answers and finish the quiz?
+                    </p>
+                </div>
+                <div class="mdl-dialog__actions">
+                    <button type="submit" class="mdl-button" name="finish_quiz">Yes</button>
+                    <button type="button" class="mdl-button" onclick="close_finish_quiz_dialog()">No</button>
+                </div>
+            </dialog>
         </form>
     </div>
 
 {% endblock container %}
+
+{% block scripts %}
+    <script>
+        const finish_quiz_dialog = document.querySelector('dialog');
+        function finish_confirmation() {
+            finish_quiz_dialog.showModal();
+        }
+        if (!finish_quiz_dialog.showModal) {
+            dialogPolyfill.registerDialog(finish_quiz_dialog);
+        }
+        function close_finish_quiz_dialog() {
+            finish_quiz_dialog.close();
+        }
+    </script>
+{% endblock scripts %}

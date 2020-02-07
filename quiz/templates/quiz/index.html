@@ -1,8 +1,9 @@
 {% extends 'quiz/base.html' %}
+{% load static %}
 
 {% block container %}
 
-    <div class="container">
+    <div class="container" id="quiz_home_container">
         <h3>Mock Tests</h3>
 
         {% for mock_test in mock_tests %}
@@ -35,8 +36,21 @@
             </div>
             <br/>
 
-        {% endfor %}
+        {% endfor %} {# mock_tests #}
+
+        Your Quizzes:
+        <div id="my_quizzes_container">
+            <p id="my_quizzes_loader">loading...</p>
+            <div id="my_quiz_box" v-for="my_quiz in my_quizzes">
+
+            </div>
+
+        </div>
 
     </div>
 
 {% endblock container %}
+
+{% block scripts %}
+    <script src="{% static 'quiz/scripts/home.js' %}"></script>
+{% endblock scripts %}

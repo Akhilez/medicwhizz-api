@@ -31,7 +31,7 @@ DEBUG = os.environ.get('DEBUG', False) == 'True'
 ALLOWED_HOSTS = ['*']
 
 MW_APPS = [
-    'api',
+    'api_external',
     'quiz',
     'admin'
 ]

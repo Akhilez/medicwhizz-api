@@ -20,7 +20,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = [
     # path('admin/', admin.site.urls),
     path('quiz/', include('quiz.urls', namespace='quiz')),
-    path('api/', include('api.urls', namespace='api')),
+    path('api/', include('api_external.urls', namespace='api')),
+    path('api_in/', include('api_internal.urls', namespace='api_internal')),
     path('admin/', include('admin.urls', namespace='admin')),
     path('', app_views.redirect_to_home),
 ]

@@ -16,6 +16,7 @@ class PreQuizPage(Page):
         self.mock_id = mock_id
         self.db = FirebaseManager.get_instance()
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
+        self.user_id = self.user['localId']
 
     def get_view(self):
         if self.request.method == 'POST':
@@ -35,7 +36,7 @@ class PreQuizPage(Page):
         return self.render_view()
 
     def add_quiz_to_db(self, start_time):
-        quiz_reference = self.db.init_mock_quiz(self.user['localId'], self.mock_id,
+        quiz_reference = self.db.init_mock_quiz(self.user_id, self.mock_id,
                                                 utils.timestamp_to_datetime(start_time))
         return quiz_reference.id
 
@@ -47,6 +48,7 @@ class MockQuizPage(Page):
         self.mock_id = request.session.get('mock_id')
         self.db = FirebaseManager.get_instance()
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
+        self.user_id = self.user['localId']
         self.start_time = utils.timestamp_to_datetime(request.session.get('start_time', 0))
         self.current_question_number = request.session.get('current_question_number', 1)
         self.time_limit = float(request.session.get('time_limit', 60))
@@ -68,6 +70,8 @@ class MockQuizPage(Page):
                 return self.handle_save_answer()
             if 'change_question' in self.request.POST:
                 return self.handle_change_question()
+            if 'finish_quiz' in self.request.POST:
+                return self.handle_finish_quiz()
         self.load_data()
         return self.render_view()
 
@@ -103,7 +107,7 @@ class MockQuizPage(Page):
         question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
         choice = self.db.get_mock_choice(self.mock_id, question.id, choice_id)
         self.db.answer_mock_question(
-            player_id=self.user['localId'],
+            player_id=self.user_id,
             quiz_state_id=self.quiz_state_id,
             mock_id=self.mock_id,
             index=self.current_question_number,
@@ -143,7 +147,7 @@ class MockQuizPage(Page):
 
     def get_question_status(self):
         answers = []
-        answers_stream = self.db.get_quiz_state_answers(self.user['localId'], self.mock_id, self.quiz_state_id)
+        answers_stream = self.db.get_quiz_state_answers(self.user_id, self.mock_id, self.quiz_state_id)
         # TODO: Investigate this
         for answer in answers_stream:
             answers.append({
@@ -182,20 +186,23 @@ class MockQuizPage(Page):
             'score': score,
             'score_max_end': out_of
         }
-        self.db.update_quiz_state(self.user['localId'], self.mock_id, self.quiz_state_id, finishing_data)
+        self.db.update_quiz_state(self.user_id, self.mock_id, self.quiz_state_id, finishing_data)
 
     def update_last_updated(self):
         try:
             timestamp = datetime.now()
             self.request.session['last_updated'] = utils.datetime_to_timestamp(timestamp)
-            self.db.update_quiz_state(self.user['localId'], self.mock_id, self.quiz_state_id, {'lastUpdated': timestamp})
+            self.db.update_quiz_state(self.user_id, self.mock_id, self.quiz_state_id, {'lastUpdated': timestamp})
         except Exception as e:
             logger.error(f"Error during updating the last updated timestamp. {e}")
 
     def get_score(self):
-        answers = self.db.get_mock_quiz_answers(self.user['localId'], self.mock_id, self.quiz_state_id)
+        answers = self.db.get_mock_quiz_answers(self.user_id, self.mock_id, self.quiz_state_id)
         answers = [answer.to_dict() for answer in answers]
         score = sum(1 if answer.get('hasScored', False) else 0 for answer in answers)
         return score, len(answers)
 
-
+    def handle_finish_quiz(self):
+        self.add_finishing_data()
+        self.clear_session_quiz_data()
+        return redirect('quiz:home')

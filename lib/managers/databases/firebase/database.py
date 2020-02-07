@@ -58,8 +58,84 @@ class FirebaseManager(DatabaseManager):
 
     # ======================== Firestore methods ===========================
 
+    # ======================== READ ONLY ===================================
+
+    def get_user_mock_test_attempts(self, player_id, last_n=3):
+        self.db.collection(f'users/{player_id}/matches/mocks')
+        # TODO: get_user_mock_test_attempts
+
     def get_quiz_state_answers(self, player_id, mock_id, quiz_state_id):
         return self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
+
+    def get_mock_quiz_answers(self, player_id, mock_id, quiz_state_id):
+        answers = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
+        answers = [answer for answer in answers]
+        return answers
+
+    def get_mock_question_from_index(self, mock_id, index):
+        questions = self.db.collection(f'mockTests/{mock_id}/questions').where('index', '==', index).stream()
+        questions_list = [question for question in questions]
+        if len(questions_list) > 1:
+            logger.error(f"Found more than one question at index: {index}")
+        elif len(questions_list) == 1:
+            return questions_list[0]
+
+    def get_mock_choice(self, mock_id, question_id, choice_id):
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()
+
+    def get_mock_choices(self, mock_id, question_id):
+        return self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').order_by(u'index')
+
+    def is_mock_question_present(self, mock_id, index):
+        # TODO: Check if this index already exists in the collection.
+        return False
+
+    def get_largest_mock_question_index(self, mock_id):
+        # TODO: Get the largest index of mock questions
+        return 0
+
+    def get_mock_question(self, mock_id, question_id):
+        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
+
+    def get_mock_test(self, mock_id):
+        return self.db.document(f'mockTests/{mock_id}').get()
+
+    def list_mock_tests(self):
+        mock_tests_stream = self.db.collection('mockTests').stream()
+        mock_tests = [mock_test for mock_test in mock_tests_stream]
+        logger.info(f"Mocks found = {mock_tests}")
+        return mock_tests
+
+    def get_mock_questions(self, mock_id, start_index=1, end_index=10):
+        """
+        :param start_index: start index
+        :param end_index: one greater than the largest index requested
+        :param mock_id: string
+        :return: list of questions dict
+        """
+        questions_stream = self.db.collection(f'mockTests/{mock_id}/questions') \
+            .where('index', '>=', start_index) \
+            .where('index', '<', end_index) \
+            .order_by(u'index') \
+            .stream()
+        return [question for question in questions_stream]
+
+    def get_mock_questions_reference(self, mock_id):
+        return self.db.collection(f'mockTests/{mock_id}/questions')
+
+    def get_admin_document(self):
+        admin_docs = self.db.collection('groups').where('name', '==', 'admin')
+        groups = [doc for doc in admin_docs.stream()]
+        if len(groups) == 0:
+            group = self.create_group(group_name='admin')
+            if group is None:
+                logger.error(f"Failed to create group admin")
+                return None
+            return group
+        logger.info(f"Group = {groups[0].__dict__}")
+        return groups[0].reference
+
+    # ========================== MODIFICATIONS ================================
 
     def init_mock_quiz(self, player_id, mock_id, start_time):
         mock_quiz_dict = {
@@ -84,24 +160,8 @@ class FirebaseManager(DatabaseManager):
         response = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').add(answer_dict)
         return self.validate_response(response)
 
-    def get_mock_quiz_answers(self, player_id, mock_id, quiz_state_id):
-        answers = self.db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
-        answers = [answer for answer in answers]
-        return answers
-
-    def get_mock_question_from_index(self, mock_id, index):
-        questions = self.db.collection(f'mockTests/{mock_id}/questions').where('index', '==', index).stream()
-        questions_list = [question for question in questions]
-        if len(questions_list) > 1:
-            logger.error(f"Found more than one question at index: {index}")
-        elif len(questions_list) == 1:
-            return questions_list[0]
-
     def update_mock_question_attributes(self, mock_id, question_id, pairs):
         return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').update(pairs)
-
-    def get_mock_choice(self, mock_id, question_id, choice_id):
-        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()
 
     def update_mock_choices(self, mock_id, question_id, choice_id, pairs):
         return self.db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').update(pairs)
@@ -168,13 +228,6 @@ class FirebaseManager(DatabaseManager):
                 return response[1]
         return f'{response}'
 
-    def get_mock_choices(self, mock_id, question_id):
-        return self.db.collection(f'mockTests/{mock_id}/questions/{question_id}/choices').order_by(u'index')
-
-    def is_mock_question_present(self, mock_id, index):
-        # TODO: Check if this index already exists in the collection.
-        return False
-
     def add_question_to_mock_test(self, mock_id, question_text, index=None, explanation=None, choices=None,
                                   is_update=False):
         question_dict = {'text': question_text}
@@ -202,10 +255,6 @@ class FirebaseManager(DatabaseManager):
             logger.error(f"Failed to add question. Response = {response}")
             return f'{response}'
 
-    def get_largest_mock_question_index(self, mock_id):
-        # TODO: Get the largest index of mock questions
-        return 0
-
     def add_choices_to_mock_question(self, choices, mock_id, question_id):
         # TODO: Add a choices collection to questions.
         return []
@@ -213,48 +262,20 @@ class FirebaseManager(DatabaseManager):
     def increment_mock_num_questions(self, mock_id, increment_value):
         self.db.document(f'mockTests/{mock_id}').update({'numQuestions': firestore.Increment(increment_value)})
 
-    def get_mock_question(self, mock_id, question_id):
-        return self.db.document(f'mockTests/{mock_id}/questions/{question_id}').get()
-
-    def get_mock_test(self, mock_id):
-        return self.db.document(f'mockTests/{mock_id}').get()
-
     def update_mock_quiz_attributes(self, mock_id, pairs):
         return self.db.document(f'mockTests/{mock_id}').update(pairs)
 
-    def get_mock_questions(self, mock_id, start_index=1, end_index=10):
-        """
-        :param start_index: start index
-        :param end_index: one greater than the largest index requested
-        :param mock_id: string
-        :return: list of questions dict
-        """
-        questions_stream = self.db.collection(f'mockTests/{mock_id}/questions') \
-            .where('index', '>=', start_index) \
-            .where('index', '<', end_index) \
-            .order_by(u'index') \
-            .stream()
-        return [question for question in questions_stream]
-
-    def get_mock_questions_reference(self, mock_id):
-        return self.db.collection(f'mockTests/{mock_id}/questions')
-
-    def create_mock_test(self, name, prices, index=1):
+    def create_mock_test(self, name, prices, index=1, max_duration=0):
         response = self.db.collection('mockTests').add({
             'name': name,
             'price': prices,
             'index': index,
             'numQuestions': 0,
+            'maxDuration': max_duration,  # TODO: Add this max_duration from views
         })
         if len(response) > 1:
             return response[1]
         logger.error(f"Problem creating mock_test. {response}")
-
-    def list_mock_tests(self):
-        mock_tests_stream = self.db.collection('mockTests').stream()
-        mock_tests = [mock_test for mock_test in mock_tests_stream]
-        logger.info(f"Mocks found = {mock_tests}")
-        return mock_tests
 
     def is_user_admin(self, uid):
         logger.info(f"Checking whether user {uid} is an admin or not.")
@@ -262,18 +283,6 @@ class FirebaseManager(DatabaseManager):
         user_docs = self.db.collection(f'{admin_doc.path}/users').where('uid', '==', uid)
         user_docs = [user_doc for user_doc in user_docs.stream()]
         return len(user_docs) > 0
-
-    def get_admin_document(self):
-        admin_docs = self.db.collection('groups').where('name', '==', 'admin')
-        groups = [doc for doc in admin_docs.stream()]
-        if len(groups) == 0:
-            group = self.create_group(group_name='admin')
-            if group is None:
-                logger.error(f"Failed to create group admin")
-                return None
-            return group
-        logger.info(f"Group = {groups[0].__dict__}")
-        return groups[0].reference
 
     def create_group(self, group_name, permissions=None):
         group = {'name': group_name, 'permissions': permissions}
@@ -284,6 +293,7 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def create_quiz(self, player_id, quiz_type):
+        # TODO: Convert to where type=quiz_type query
         self.db.collection(f'users/{player_id}/matches/{quiz_type}/matches').add({
             'answers': [],
             'questions': [],
@@ -305,12 +315,14 @@ class FirebaseManager(DatabaseManager):
 
     @Decorators.try_and_catch
     def get_quiz_state(self, quiz_id, player_id, quiz_type):
+        # TODO: Convert to where type=quiz_type query
         state = self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').get()
         return FirebaseQuizState(state)
 
     @Decorators.try_and_catch
     def save_quiz_state(self, state, quiz_id, player_id, quiz_type):
-        self.db.document('users/' + player_id + '/matches/' + quiz_type + '/matches/' + quiz_id).update(state)
+        # TODO: Convert to where type=quiz_type query
+        self.db.document(f'users/{player_id}/matches/{quiz_type}/matches/{quiz_id}').update(state)
 
     @Decorators.try_and_catch
     def get_user_config(self, user_id):

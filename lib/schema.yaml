@@ -34,17 +34,16 @@ collections:
       name: Akhilez
       displayName: Akhil Kanna
       photoUri: https://lh3.googleusercontent.com/-HXbmqoCwO3M/AAAAAAAAAAI/AAAAAAAAO7M/ZJDFbi8XzVI/photo.jpg
-      details: # Col
-        - preferences:
-            quickQuizNumQuestions: 20
-            isPhotoPublic: true
-            questionPack: /packages/WtLXCpAkpPHIFRhZUkaA
-            defaultIcon: "/assets/stockProfilePics/profilePic1.png"
-        - stats:
-            lastSeen: timestamp
-            startDate: 22 March 2019 at 01:12:32 UTC+5:30
-            numAnswersCorrect: 34
-            numQuestionsAnswered: 122
+      preferences:
+        quickQuizNumQuestions: 20
+        isPhotoPublic: true
+        questionPack: /packages/WtLXCpAkpPHIFRhZUkaA
+        defaultIcon: "/assets/stockProfilePics/profilePic1.png"
+      stats:
+        lastSeen: timestamp
+        startDate: 22 March 2019 at 01:12:32 UTC+5:30
+        numAnswersCorrect: 34
+        numQuestionsAnswered: 122
       matches:  # Collection
         - quizId: mockTests.id  # Document
           type: mock
@@ -83,6 +82,8 @@ collections:
           questions: # COL
             - question: /questions/ID
               choice: /questions/ID/choices/ID
+      mock_test_stats:  # Dictionary
+        last_score: '8/10'
 
   groups:
     - name: group name

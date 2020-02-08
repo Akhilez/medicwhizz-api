@@ -67,14 +67,14 @@ class FirebaseManager(DatabaseManager):
         return self._db.collection(reference_string)
 
     def get_user_mock_test_attempts(self, player_id, last_n=3):
-        self._db.collection(f'users/{player_id}/matches/mocks')
+        self._db.collection(f'users/{player_id}/matches')
         # TODO: get_user_mock_test_attempts
 
     def get_quiz_state_answers(self, player_id, mock_id, quiz_state_id):
         return self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}/answers').stream()
 
     def get_mock_quiz_answers(self, player_id, mock_id, quiz_state_id):
-        answers = self._db.collection(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}/answers').stream()
+        answers = self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}/answers').stream()
         answers = [answer for answer in answers]
         return answers
 
@@ -152,7 +152,7 @@ class FirebaseManager(DatabaseManager):
         return self.validate_response(response)
 
     def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs):
-        return self._db.document(f'users/{player_id}/matches/mocks/{mock_id}/{quiz_state_id}').update(pairs)
+        return self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update(pairs)
 
     def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_reference,
                              has_scored):

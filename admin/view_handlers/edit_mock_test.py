@@ -128,6 +128,10 @@ class EditMockQuestionPage(Page):
             return self.handle_delete_question()
         if 'delete_mock_choice' in self.request.POST:
             return self.handle_delete_choice()
+        if 'add_new_question' in self.request.POST:
+            return EditMockPage(self.request, self.mock_id).handle_new_question()
+        self.context['error'] = "Couldn't handle the request"
+        self.load_data()
         return self.render_view()
 
     def handle_delete_choice(self):

@@ -279,7 +279,7 @@ class FirebaseManager(DatabaseManager):
             'price': prices,
             'index': index,
             'numQuestions': 0,
-            'maxDuration': max_duration,  # TODO: Add this max_duration from views
+            'duration': max_duration,  # TODO: Add this max_duration from views
         })
         if len(response) > 1:
             return response[1]

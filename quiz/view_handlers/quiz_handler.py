@@ -30,6 +30,7 @@ class PreQuizPage(Page):
                     'last_updated': start_time,
                     'time_limit': mock_test_dict['duration'],
                     'num_questions': mock_test_dict['numQuestions'],
+                    'questions': [],
                 }
                 attempt_ref = self.db.init_mock_quiz(self.user_id, self.mock_id, utils.timestamp_to_datetime(start_time))
                 quiz_data['quiz_state_id'] = attempt_ref.id
@@ -102,14 +103,15 @@ class MockQuizPage(Page):
 
     def answer_choice(self, choice_id):
         # Get the question from session
-        question_ref_string = self.request.session['current_question_dict']['id']
+        question_ref_string = self.request.session['questions'][-1]['id']
         question = self.db.get_document_reference(question_ref_string)
 
         # Get the selected choice from session
         selected_choice = None
-        for choice in self.request.session['current_question_dict']['choices']:
+        for choice in self.request.session['questions'][-1]['choices']:
             if choice['id'] == choice_id:
                 selected_choice = choice
+                self.request.session['questions'][-1]['chosen'] = choice
 
         # Update the database with the selected question
         self.db.answer_mock_question(
@@ -138,7 +140,7 @@ class MockQuizPage(Page):
             'question_status': utils.dict_to_object(self.get_question_status()),
             'is_last_question': self.num_questions == self.current_question_number,
         }
-        self.request.session['current_question_dict'] = question_dict
+        self.request.session['questions'].append(question_dict)
         self.context.update(context)
         self.request.session['current_question_number'] = self.current_question_number
 
@@ -156,12 +158,10 @@ class MockQuizPage(Page):
 
     def get_question_status(self):
         answers = []
-        answers_stream = self.db.get_quiz_state_answers(self.user_id, self.mock_id, self.quiz_state_id)
-        # TODO: MAINTAIN THE STATE WITHIN SESSION VARIABLE!!!!!
-        for answer in answers_stream:
+        for question in self.request.session['questions']:
             answers.append({
-                'number': answer.to_dict()['index'],
-                'is_answered': True
+                'number': question['index'],
+                'is_answered': question.get('chosen', False)
             })
         for i in range(self.num_questions - len(answers)):
             answers.append({

@@ -14,9 +14,9 @@
             {% csrf_token %}
             <p class="mdl-typography--subhead">Choices:</p>
             {% for choice in question.choices %}
-                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-{{ choice.id }}">
-                    <input type="radio" id="option-{{ choice.id }}" class="mdl-radio__button" name="choice"
-                           value="{{ choice.id }}">
+                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-{{ choice.index }}">
+                    <input type="radio" id="option-{{ choice.index }}" class="mdl-radio__button" name="choice"
+                           value="{{ choice.index }}">
                     <span class="mdl-radio__label">{{ choice.text }}</span>
                 </label><br/>
             {% endfor %}

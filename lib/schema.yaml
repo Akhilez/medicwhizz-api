@@ -52,7 +52,7 @@ collections:
           attempts:  # Collection
             - startTime: timestamp
               lastUpdated: timestamp
-              answers:  # Collection
+              answers:  # list of maps
                 - index: question index
                   questionId: question reference
                   choiceId: choice reference
@@ -101,8 +101,12 @@ collections:
       questions: # Col
         - index: 0
           text: What is the correct answer?
-          choices: # Col
+          choices: # List of Maps
             - text: Correct option
               isCorrect: true
               index: 2
           explanation: String
+
+  metaData:
+    - mockTests:
+        numMockTests: 3

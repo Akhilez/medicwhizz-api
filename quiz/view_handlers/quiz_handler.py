@@ -90,7 +90,7 @@ class MockQuizPage(Page):
 
     def handle_save_answer(self):
         self.update_last_updated()
-        self.answer_choice(self.request.POST.get('choice'))
+        self.answer_choice(int(self.request.POST.get('choice')))
         if self.current_question_number == self.num_questions:  # The quiz is finished
             self.finish_quiz()
             return redirect('quiz:quiz_results', self.quiz_state_id)
@@ -99,7 +99,7 @@ class MockQuizPage(Page):
         self.load_data()
         return self.render_view()
 
-    def answer_choice(self, choice_id):
+    def answer_choice(self, choice_index):
         # Get the question from session
         question_id = self.request.session['questions'][-1]['id']
         question_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}/questions/{question_id}')
@@ -107,11 +107,10 @@ class MockQuizPage(Page):
         # Get the selected choice from session
         selected_choice = None
         for choice in self.request.session['questions'][-1]['choices']:
-            if choice['id'] == choice_id:
+            if choice['index'] == choice_index:
                 selected_choice = choice
                 self.request.session['questions'][-1]['chosen'] = choice
                 self.request.session['questions'][-1]['hasScored'] = bool(choice.get('isCorrect'))
-        choice_reference = self.db.get_document_reference(f'{question_reference.path}/choices/{choice_id}')
 
         # Update the database with the selected question
         self.db.answer_mock_question(
@@ -120,7 +119,6 @@ class MockQuizPage(Page):
             mock_id=self.mock_id,
             index=self.current_question_number,
             question_reference=question_reference,
-            choice_reference=choice_reference,
             has_scored=bool(selected_choice.get('isCorrect'))
         )
 
@@ -150,12 +148,6 @@ class MockQuizPage(Page):
         question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
         question_dict = question.to_dict()
         question_dict['id'] = question.id
-        question_dict['choices'] = []
-        choices_stream = self.db.get_mock_choices(self.mock_id, question.id).stream()
-        for choice in choices_stream:
-            choice_dict = choice.to_dict()
-            choice_dict['id'] = choice.id
-            question_dict['choices'].append(choice_dict)
         return question_dict
 
     def get_question_status(self):

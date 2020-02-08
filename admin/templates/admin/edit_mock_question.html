@@ -44,46 +44,51 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% if choices|length > 0 %}
-                    {% for choice in choices %}
-                        <tr>
-                            <td><input type="number" name="choiceIndex-{{ choice.id }}" value="{{ choice.index }}"
+                {% if question.choices|length > 0 %}
+                    {% for choice in question.choices %}
+                        <tr id="tr_choice_{{ choice.index }}">
+                            <td><input type="number" name="choiceIndex-{{ choice.index }}" value="{{ choice.index }}"
                                        class="mdl-textfield__input"></td>
-                            <td><input type="text" name="choice-{{ choice.id }}" value="{{ choice.text }}"
+                            <td><input type="text" name="choice-{{ choice.index }}" value="{{ choice.text }}"
                                        class="mdl-textfield__input"></td>
                             <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
-                                       for="isCorrectBox-{{ choice.id }}">
-                                <input type="checkbox" id="isCorrectBox-{{ choice.id }}" class="mdl-checkbox__input"
-                                       name="is_correct_{{ choice.id }}"
+                                       for="isCorrectBox-{{ choice.index }}">
+                                <input type="checkbox" id="isCorrectBox-{{ choice.index }}" class="mdl-checkbox__input"
+                                       name="is_correct_{{ choice.index }}"
                                         {% if choice.isCorrect %} checked {% endif %}>
                             </label></td>
                             <td>
-                                <button type="button" onclick="deleteChoice('{{ choice.id }}', '{{ choice.text }}')"
+                                <button type="button" onclick="deleteChoice('{{ choice.index }}', '{{ choice.text }}')"
                                         class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete
                                 </button>
                             </td>
                         </tr>
                     {% endfor %}
                 {% else %}
-                    {% for choice_id in "1234" %}
+                    {% for choice_index in "1234" %}
                         <tr>
-                            <td><input type="number" name="choiceIndex-{{ choice_id }}" value="{{ choice_id }}"
+                            <td><input type="number" name="choiceIndex-{{ choice_index }}" value="{{ choice_index }}"
                                        class="mdl-textfield__input"></td>
-                            <td><input type="text" name="choice-{{ choice_id }}" value=""
+                            <td><input type="text" name="choice-{{ choice_index }}" value=""
                                        class="mdl-textfield__input"></td>
                             <td><label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
-                                       for="isCorrectBox-{{ choice_id }}">
-                                <input type="checkbox" id="isCorrectBox-{{ choice_id }}" class="mdl-checkbox__input"
-                                       name="is_correct_{{ choice_id }}">
+                                       for="isCorrectBox-{{ choice_index }}">
+                                <input type="checkbox" id="isCorrectBox-{{ choice_index }}" class="mdl-checkbox__input"
+                                       name="is_correct_{{ choice_index }}">
                             </label></td>
+                            <td>
+                                <button type="button" onclick="deleteChoice('{{ choice.index }}', '{{ choice.index }}')"
+                                        class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete
+                                </button>
+                            </td>
                         </tr>
                     {% endfor %}
                 {% endif %}
                 <tr>
                     <td class="mdl-data-table__cell--non-numeric">
-                        <button onclick="popAddChoice()" id="addNewChoiceButton" type="button"
+                        <button onclick="addNewChoice()" id="addNewChoiceButton" type="button"
                                 class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                            Add
+                            Add Choice
                         </button>
                     </td>
                 </tr>
@@ -97,28 +102,6 @@
                     style="margin-top: 16px">Delete
             </button>
             <br/>
-
-            <div id="add_choice_pop_up" style="display: none;">
-                <h4>Add New Choice</h4>
-                Your unsaved changes will be lost. Please save the changes (if any) before adding a new choice.<br/>
-                <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input" type="text" id="newChoiceTextField" name="new_choice_text">
-                    <label class="mdl-textfield__label" for="newChoiceTextField">Enter New Choice</label>
-                </div>
-                <br/>
-                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
-                       for="isNewCorrectBox">
-                    <input type="checkbox" id="isNewCorrectBox" class="mdl-checkbox__input"
-                           name="new_choice_is_correct">
-                    <span class="mdl-checkbox__label">Is this choice a correct option?</span>
-                </label><br/><br/>
-                <input type="submit" name="add_new_choice" value="Add"
-                       class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                <button onclick="closePopUp()" type="button"
-                        class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Close
-                </button>
-            </div>
-
             <hr/>
 
             <!-- -------------------- Add New Question -------------------->
@@ -158,8 +141,10 @@
                 </div>
                 <div class="mdl-dialog__actions">
                     <button type="button" class="mdl-button close" onclick="closeDialogs()">No</button>
-                    <input hidden type="text" id="choiceIdHidden" name="delete_mock_choice_id">
-                    <button type="submit" class="mdl-button" name="delete_mock_choice">Yes</button>
+                    <input hidden type="text" id="choiceIndexHidden" name="delete_mock_choice_index">
+                    <button type="button" class="mdl-button" onclick="confirmDeleteChoice()" name="delete_mock_choice">
+                        Yes
+                    </button>
                 </div>
             </dialog>
 
@@ -168,22 +153,33 @@
     </div>
 
     <script>
-        function popAddChoice() {
-            document.getElementById("add_choice_pop_up").style.display = 'block';
-            document.getElementById("addNewChoiceButton").style.display = 'none';
-        }
 
-        function closePopUp() {
-            document.getElementById("add_choice_pop_up").style.display = 'none';
-            document.getElementById("addNewChoiceButton").style.display = 'block';
+        function addNewChoice() {
+            let table = document.getElementById("choices_table");
+            let row = table.insertRow(table.rows.length - 1);
+            let choice_index = table.rows.length - 2;
+            row.id = 'tr_choice_' + choice_index;
+
+            let index = row.insertCell(0);
+            let text = row.insertCell(1);
+            let isCorrect = row.insertCell(2);
+            let deleteButton = row.insertCell(3);
+
+            index.innerHTML = '<input type="number" name="choiceIndex-' + choice_index + '" value="' + choice_index + '" class="mdl-textfield__input">';
+            text.innerHTML = '<input type="text" name="choice-' + choice_index + '" value="" class="mdl-textfield__input">';
+            isCorrect.innerHTML = '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="isCorrectBox-' + choice_index + '">\n' +
+                '                  <input type="checkbox" id="isCorrectBox-' + choice_index + '" class="mdl-checkbox__input" name="is_correct_' + choice_index + '"> </label>';
+            deleteButton.innerHTML = '<button type="button" onclick="deleteChoice(' + choice_index + ', ' + choice_index + ')"\n' +
+                '                    class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">Delete</button>'
+
         }
 
         let deletingChoice = null;
 
-        function deleteChoice(choiceId, choiceText) {
-            deletingChoice = choiceId;
+        function deleteChoice(choiceIndex, choiceText) {
+            deletingChoice = choiceIndex;
             document.getElementById("choiceDialog").innerHTML = "Are you that you want to delete the choice - " + choiceText + "?";
-            document.getElementById("choiceIdHidden").value = choiceId;
+            document.getElementById("choiceIndexHidden").value = choiceIndex;
             let choiceDialog = document.querySelector("#deleteChoiceDialog");
             choiceDialog.showModal();
         }
@@ -196,6 +192,13 @@
         function closeDialogs() {
             let questionDialog = document.querySelector("#deleteQuestionDialog");
             questionDialog.close();
+            let choiceDialog = document.querySelector("#deleteChoiceDialog");
+            choiceDialog.close();
+            deletingChoice = null;
+        }
+
+        function confirmDeleteChoice() {
+            $("#tr_choice_" + deletingChoice).remove();
             let choiceDialog = document.querySelector("#deleteChoiceDialog");
             choiceDialog.close();
             deletingChoice = null;

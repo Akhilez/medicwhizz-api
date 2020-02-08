@@ -106,6 +106,7 @@ class EditMockQuestionPage(Page):
         self.question_id = mock_test_question_id
         self.template_path = 'admin/edit_mock_question.html'
         self.db = FirebaseManager.get_instance()
+
         self.context['mock_id'] = mock_test_id
         self.context['question_id'] = mock_test_question_id
 
@@ -117,31 +118,15 @@ class EditMockQuestionPage(Page):
 
     def load_data(self):
         self.context['question'] = dict_to_object(self.db.get_mock_question(self.mock_id, self.question_id).to_dict())
-        self.context['choices'] = self.get_choices()
 
     def handle_post_request(self):
         if 'save_details' in self.request.POST:
             return self.handle_save()
-        if 'add_new_choice' in self.request.POST:
-            return self.handle_new_choice()
         if 'delete_mock_question' in self.request.POST:
             return self.handle_delete_question()
-        if 'delete_mock_choice' in self.request.POST:
-            return self.handle_delete_choice()
         if 'add_new_question' in self.request.POST:
             return EditMockPage(self.request, self.mock_id).handle_new_question()
         self.context['error'] = "Couldn't handle the request"
-        self.load_data()
-        return self.render_view()
-
-    def handle_delete_choice(self):
-        choice_id = self.request.POST.get('delete_mock_choice_id')
-        if choice_id:
-            response = self.db.delete_mock_choice(self.mock_id, self.question_id, choice_id)
-            if isinstance(response, Exception):
-                self.context['error'] = response
-        else:
-            self.context['error'] = 'Choice id must be valid'
         self.load_data()
         return self.render_view()
 
@@ -153,46 +138,17 @@ class EditMockQuestionPage(Page):
             return self.render_view()
         return redirect('admin:edit_mock', self.mock_id)
 
-    def handle_new_choice(self):
-        choice_text = self.request.POST.get('new_choice_text')
-        is_choice_correct = self.request.POST.get('new_choice_is_correct')
-        if choice_text:
-            choice_dict = {'text': choice_text, 'isCorrect': is_choice_correct, 'index': 0}
-            response = self.db.add_new_mock_choice(self.mock_id, self.question_id, choice_dict)
-            if not isinstance(response, DocumentReference):
-                self.context['error'] = f'{response}'
-        else:
-            self.context['error'] = 'Invalid choice text.'
-        self.load_data()
-        return self.render_view()
-
     def handle_save(self):
         attributes = {
             'text': self.request.POST.get('question_text'),
             'index': int(self.request.POST.get('question_index', 0)),
             'explanation': self.request.POST.get('explanation'),
+            'choices': self.get_choices_from_html(),
         }
         self.db.update_mock_question_attributes(self.mock_id, self.question_id, attributes)
-        self.save_choices(self.get_choices_from_html())
         self.context['message'] = "Question saved successfully."
         self.load_data()
         return self.render_view()
-
-    def get_choices(self):
-        choices_stream = self.db.get_mock_choices(self.mock_id, self.question_id).stream()
-        choices_list = []
-        for choice in choices_stream:
-            choice_dict = choice.to_dict()
-            choice_dict['id'] = choice.id
-            choices_list.append(dict_to_object(choice_dict))
-        return choices_list
-
-    def save_choices(self, choices):
-        for choice_id in choices:
-            if choice_id in ('1', '2', '3', '4'):
-                self.db.add_new_mock_choice(self.mock_id, self.question_id, choices[choice_id])
-            else:
-                self.db.update_mock_choices(self.mock_id, self.question_id, choice_id, choices[choice_id])
 
     def get_choices_from_html(self):
         choice_ids = []
@@ -200,16 +156,16 @@ class EditMockQuestionPage(Page):
             if 'choice-' in key:
                 choice_ids.append(key[7:])
         logger.info(f"Choice Ids found = {choice_ids}")
-        choices = {}
+        choices = []
         for choice_id in choice_ids:
             choice_text = self.request.POST.get(f'choice-{choice_id}')
             if len(choice_text) == 0:
                 continue
-            choices[choice_id] = {
+            choices.append({
                 'index': int(self.request.POST.get(f'choiceIndex-{choice_id}', 0)),
                 'text': choice_text,
                 'isCorrect': bool(self.request.POST.get(f'is_correct_{choice_id}', False)),
-            }
+            })
         return choices
 
 

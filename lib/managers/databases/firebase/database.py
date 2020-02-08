@@ -70,21 +70,10 @@ class FirebaseManager(DatabaseManager):
         self._db.collection(f'users/{player_id}/matches')
         # TODO: get_user_mock_test_attempts
 
-    def get_quiz_state_answers(self, player_id, mock_id, quiz_state_id):
-        return self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}/answers').stream()
-
-    def get_mock_quiz_answers(self, player_id, mock_id, quiz_state_id):
-        answers = self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}/answers').stream()
-        answers = [answer for answer in answers]
-        return answers
-
     def get_mock_question_from_index(self, mock_id, index):
-        questions = self._db.collection(f'mockTests/{mock_id}/questions').where('index', '==', index).stream()
+        questions = self._db.collection(f'mockTests/{mock_id}/questions').where('index', '>=', index).limit(1).stream()
         questions_list = [question for question in questions]
-        if len(questions_list) > 1:
-            logger.error(f"Found more than one question at index: {index}")
-        elif len(questions_list) == 1:
-            return questions_list[0]
+        return questions_list[0]
 
     def get_mock_choice(self, mock_id, question_id, choice_id):
         return self._db.document(f'mockTests/{mock_id}/questions/{question_id}/choices/{choice_id}').get()
@@ -107,7 +96,7 @@ class FirebaseManager(DatabaseManager):
         return self._db.document(f'mockTests/{mock_id}').get()
 
     def list_mock_tests(self):
-        mock_tests_stream = self._db.collection('mockTests').stream()
+        mock_tests_stream = self._db.collection('mockTests').order_by('index').stream()
         mock_tests = [mock_test for mock_test in mock_tests_stream]
         logger.info(f"Mocks found = {mock_tests}")
         return mock_tests
@@ -141,12 +130,28 @@ class FirebaseManager(DatabaseManager):
         logger.info(f"Group = {groups[0].__dict__}")
         return groups[0].reference
 
+    def get_num_mock_tests(self):
+        meta_data_ref = self._db.document('metaData/mockTests')
+        meta_data = meta_data_ref.get()
+
+        if not meta_data.exists:
+            meta_data_ref.update({'numMockTests': 0})
+            return 0
+        else:
+            return int(meta_data.to_dict()['numMockTests'])
+
+    def get_mock_quiz_state(self, player_id, mock_id, quiz_state_id):
+        return self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').get()
+
     # ========================== MODIFICATIONS ================================
 
     def init_mock_quiz(self, player_id, mock_id, start_time):
         mock_quiz_dict = {
             'startTime': start_time,
             'lastUpdated': start_time,
+            'elapsedTime': 0,
+            'score': 0,
+            'answers': [],
         }
         response = self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts').add(mock_quiz_dict)
         return self.validate_response(response)
@@ -163,10 +168,12 @@ class FirebaseManager(DatabaseManager):
             'hasScored': has_scored,
             'timestamp': datetime.now(),
         }
+        quiz_state = self.get_mock_quiz_state(player_id, mock_id, quiz_state_id).to_dict()
+        quiz_state_answers = quiz_state['answers']
+        quiz_state_answers.append(answer_dict)
         response = self._db.document(
-            f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}/answers/question_{index}').set(
-            answer_dict)
-        return self.validate_response(response)
+            f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update({'answers': quiz_state_answers})
+        return response
 
     def update_mock_question_attributes(self, mock_id, question_id, pairs):
         return self._db.document(f'mockTests/{mock_id}/questions/{question_id}').update(pairs)
@@ -223,6 +230,7 @@ class FirebaseManager(DatabaseManager):
                 question.reference.delete()
                 questions_deleted.append(question.id)
             self._db.document(f'mockTests/{mock_id}').delete()
+            self.increment_num_mock_tests(-1)
         except Exception as e:
             logger.error(f"Error while deleting mock test {mock_id}. {e}")
             return e
@@ -270,10 +278,14 @@ class FirebaseManager(DatabaseManager):
     def increment_mock_num_questions(self, mock_id, increment_value):
         self._db.document(f'mockTests/{mock_id}').update({'numQuestions': firestore.Increment(increment_value)})
 
+    def increment_num_mock_tests(self, increment_value):
+        self._db.document(f'metaData/mockTests').update({'numMockTests': firestore.Increment(increment_value)})
+
     def update_mock_quiz_attributes(self, mock_id, pairs):
         return self._db.document(f'mockTests/{mock_id}').update(pairs)
 
-    def create_mock_test(self, name, prices, index=1, max_duration=0):
+    def create_mock_test(self, name, prices, index=None, max_duration=0):
+        index = index if index is not None else self.get_num_mock_tests() + 1
         response = self._db.collection('mockTests').add({
             'name': name,
             'price': prices,
@@ -282,6 +294,7 @@ class FirebaseManager(DatabaseManager):
             'duration': max_duration,  # TODO: Add this max_duration from views
         })
         if len(response) > 1:
+            self.increment_num_mock_tests(1)
             return response[1]
         logger.error(f"Problem creating mock_test. {response}")
 

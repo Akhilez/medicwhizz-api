@@ -10,6 +10,7 @@
         <!-- Navigation -->
         <div>
             <nav class="android-navigation mdl-navigation">
+                <a class="mdl-navigation__link mdl-typography--text-uppercase" href="{% url 'quiz:home' %}">Home</a>
                 {% if is_admin %}
                 <a class="mdl-navigation__link mdl-typography--text-uppercase" href="{% url 'admin:home' %}">Admin</a>
                 {% endif %}

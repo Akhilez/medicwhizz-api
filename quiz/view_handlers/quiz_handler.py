@@ -58,8 +58,7 @@ class MockQuizPage(Page):
         if not status.is_valid:
             self.context['error'] = status.message
             if status.code == 2:  # Time is up!
-                self.add_finishing_data()
-                self.clear_session_quiz_data()
+                self.finish_quiz()
                 return self.render_view()
             elif status.code == 1:  # INVALID MOCK QUIZ
                 return redirect('quiz:home')
@@ -93,8 +92,7 @@ class MockQuizPage(Page):
         self.update_last_updated()
         self.answer_choice(self.request.POST.get('choice'))
         if self.current_question_number == self.num_questions:  # The quiz is finished
-            self.add_finishing_data()
-            self.clear_session_quiz_data()
+            self.finish_quiz()
             return redirect('quiz:quiz_results', self.quiz_state_id)
 
         self.current_question_number += 1
@@ -103,8 +101,8 @@ class MockQuizPage(Page):
 
     def answer_choice(self, choice_id):
         # Get the question from session
-        question_ref_string = self.request.session['questions'][-1]['id']
-        question = self.db.get_document_reference(question_ref_string)
+        question_id = self.request.session['questions'][-1]['id']
+        question_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}/questions/{question_id}')
 
         # Get the selected choice from session
         selected_choice = None
@@ -112,6 +110,8 @@ class MockQuizPage(Page):
             if choice['id'] == choice_id:
                 selected_choice = choice
                 self.request.session['questions'][-1]['chosen'] = choice
+                self.request.session['questions'][-1]['hasScored'] = bool(choice.get('isCorrect'))
+        choice_reference = self.db.get_document_reference(f'{question_reference.path}/choices/{choice_id}')
 
         # Update the database with the selected question
         self.db.answer_mock_question(
@@ -119,8 +119,8 @@ class MockQuizPage(Page):
             quiz_state_id=self.quiz_state_id,
             mock_id=self.mock_id,
             index=self.current_question_number,
-            question_reference=question,
-            choice_reference=self.db.get_document_reference(selected_choice),
+            question_reference=question_reference,
+            choice_reference=choice_reference,
             has_scored=bool(selected_choice.get('isCorrect'))
         )
 
@@ -140,7 +140,9 @@ class MockQuizPage(Page):
             'question_status': utils.dict_to_object(self.get_question_status()),
             'is_last_question': self.num_questions == self.current_question_number,
         }
-        self.request.session['questions'].append(question_dict)
+        questions_list = self.request.session['questions']
+        if len(questions_list) == 0 or len(questions_list) > 0 and questions_list[-1]['id'] != question_dict['id']:
+            questions_list.append(question_dict)
         self.context.update(context)
         self.request.session['current_question_number'] = self.current_question_number
 
@@ -186,14 +188,18 @@ class MockQuizPage(Page):
             except Exception as e:
                 logger.error(e)
 
+    def finish_quiz(self):
+        self.add_finishing_data()
+        self.clear_session_quiz_data()
+
     def add_finishing_data(self):
         end_time = datetime.now()
         score, out_of = self.get_score()
         finishing_data = {
-            'end_time': end_time,
-            'elapsed_time': (end_time - self.start_time).total_seconds(),
+            'endTime': end_time,
+            'elapsedTime': (end_time - self.start_time).total_seconds(),
             'score': score,
-            'score_max_end': out_of
+            'scoreMaxEnd': out_of
         }
         self.db.update_quiz_state(self.user_id, self.mock_id, self.quiz_state_id, finishing_data)
 
@@ -206,12 +212,9 @@ class MockQuizPage(Page):
             logger.error(f"Error during updating the last updated timestamp. {e}")
 
     def get_score(self):
-        answers = self.db.get_mock_quiz_answers(self.user_id, self.mock_id, self.quiz_state_id)
-        answers = [answer.to_dict() for answer in answers]
-        score = sum(1 if answer.get('hasScored', False) else 0 for answer in answers)
-        return score, len(answers)
+        score = sum(1 if question.get('hasScored', False) else 0 for question in self.request.session['questions'])
+        return score, len(self.request.session['questions'])
 
     def handle_finish_quiz(self):
-        self.add_finishing_data()
-        self.clear_session_quiz_data()
+        self.finish_quiz()
         return redirect('quiz:home')

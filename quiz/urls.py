@@ -16,5 +16,5 @@ urlpatterns = [
     url(r'^reset_password/', views.reset_password, name='reset_password'),
     url(r'^start/([A-Za-z0-9]+)/$', views.start_quiz, name='start'),
     url(r'^mock/$', views.mock_quiz, name='mock'),
-    path('quiz_results/<str:quiz_id>', views.quiz_results, name='quiz_results'),
+    path('mock_quiz_results/<str:mock_id>/<str:quiz_id>', views.mock_quiz_results, name='mock_quiz_results'),
 ]

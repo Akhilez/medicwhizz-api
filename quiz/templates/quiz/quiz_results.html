@@ -2,29 +2,26 @@
 {% block container %}
     <div class="container">
 
-        <h1>{{ quiz.name }}</h1>
-        {{ quiz.date }}
-        {{ quiz.start_time }}-{{ quiz.end_time }} ({{ time_elapsed }})
-        Score {{ quiz.score }}
-        {{ comments }}
+        <h1>{{ mock_quiz.name }}</h1>
+        {{ quiz.date }}<br/>
+        {{ quiz.startTime }}-{{ quiz.endTime }} ({{ quiz.elapsedTime }}/{{ mock_quiz.duration }})<br/>
+        Score: {{ quiz.score }}/{{ quiz.scoreMaxEnd }}<br/>
+        {{ comments }}<br/>
         <h3>Questions</h3>
-        {% for question in quiz.questions %}
+        {% for answer in quiz.answers %}
 
-            {{ question }}
-            {% for choice in question.choices %}
-                {% if choice.isCorrect %}
-                    Correct!
-                {% elif not choice.hasScored %}
-                    Wrong!
-                {% endif %}
-                {% if choice.isChoosen %}
-                    <div style="background: #00bfa5">{{ choice }}</div>
-                {% else %}
-                    {{ choice }}
-                {% endif %}
+            {{ answer.question.index }}: {{ answer.question.text }}<br/>
+            {% for choice in answer.question.choices %}
+                    <div {% if choice.isCorrect %}
+                        style="background: #00bfa5"
+                    {% elif choice.isChosen %}
+                        style="background: #dd2c00"
+                    {% endif %}>
+                        {{ choice.index }}: {{ choice.text }}</div>
+                <br/>
             {% endfor %}
-            Explanation:
-            {{ question.explanation }}
+            Explanation:<br/>
+            {{ answer.question.explanation }}
             <hr/>
 
         {% endfor %}

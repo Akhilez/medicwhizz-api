@@ -156,12 +156,13 @@ class FirebaseManager(DatabaseManager):
     def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs):
         return self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update(pairs)
 
-    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, has_scored):
+    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_index, has_scored):
         answer_dict = {
             'index': index,
             'questionId': question_reference,
             'hasScored': has_scored,
             'timestamp': datetime.now(),
+            'chosen': choice_index,
         }
         quiz_state = self.get_mock_quiz_state(player_id, mock_id, quiz_state_id).to_dict()
         quiz_state_answers = quiz_state['answers']

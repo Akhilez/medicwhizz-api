@@ -30,7 +30,7 @@ def dict_to_object(data):
     :return: obj (named tuple)
     """
     import json
-    return json.loads(json.dumps(data), object_hook=_json_object_hook)
+    return json.loads(json.dumps(data, default=str), object_hook=_json_object_hook)
 
 
 def _json_object_hook(d):

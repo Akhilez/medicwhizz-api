@@ -41,6 +41,6 @@ def mock_quiz(request):
     return MockQuizPage(request).get_view()
 
 
-def quiz_results(request, quiz_id):
+def mock_quiz_results(request, mock_id, quiz_id):
     from quiz.view_handlers.quiz_results_page import QuizResultsPage
-    return QuizResultsPage(request, quiz_id).get_view()
+    return QuizResultsPage(request, mock_id, quiz_id).get_view()

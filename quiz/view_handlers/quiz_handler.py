@@ -93,7 +93,7 @@ class MockQuizPage(Page):
         self.answer_choice(int(self.request.POST.get('choice')))
         if self.current_question_number == self.num_questions:  # The quiz is finished
             self.finish_quiz()
-            return redirect('quiz:quiz_results', self.quiz_state_id)
+            return redirect('quiz:mock_quiz_results', self.mock_id, self.quiz_state_id)
 
         self.current_question_number += 1
         self.load_data()
@@ -119,6 +119,7 @@ class MockQuizPage(Page):
             mock_id=self.mock_id,
             index=self.current_question_number,
             question_reference=question_reference,
+            choice_index=choice_index,
             has_scored=bool(selected_choice.get('isCorrect'))
         )
 

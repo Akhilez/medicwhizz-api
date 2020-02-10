@@ -26,7 +26,7 @@
 
             <div>
                 {% for status in question_status %}
-                    <button type="submit" name="change_question" value="{{ status.number }}"
+                    <button type="submit" name="change_question_{{ status.number }}" value="{{ status.number }}"
                     class="mdl-button mdl-js-button mdl-button{% if status.is_answered %}--accent{% else %}--primary{% endif %}">
                         {{ status.number }} {% if status.is_answered %}*{% endif %}
                     </button>

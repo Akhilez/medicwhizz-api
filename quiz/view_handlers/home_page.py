@@ -38,4 +38,6 @@ class HomePage(Page):
         return price_dict['india']  # TODO: Get the country of user
 
     def check_running_quizzes(self):
+        if self.request.session.get('quiz_state_id') is None:
+            return
         return self.request.session.get('mock_id')

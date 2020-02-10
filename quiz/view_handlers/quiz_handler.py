@@ -30,13 +30,21 @@ class PreQuizPage(Page):
                     'last_updated': start_time,
                     'time_limit': mock_test_dict['duration'],
                     'num_questions': mock_test_dict['numQuestions'],
-                    'questions': [],
+                    'questions': self.get_questions(),
                 }
                 attempt_ref = self.db.init_mock_quiz(self.user_id, self.mock_id, utils.timestamp_to_datetime(start_time))
                 quiz_data['quiz_state_id'] = attempt_ref.id
                 self.request.session.update(quiz_data)
                 return redirect('quiz:mock')
         return self.render_view()
+
+    def get_questions(self):
+        questions = []
+        for question in self.db.get_mock_questions(self.mock_id):
+            question_dict = question.to_dict()
+            question_dict['id'] = question.id
+            questions.append(question_dict)
+        return questions
 
 
 class MockQuizPage(Page):
@@ -52,6 +60,9 @@ class MockQuizPage(Page):
         self.time_limit = float(request.session.get('time_limit', 60))
         self.num_questions = request.session.get('num_questions')
         self.quiz_state_id = request.session.get('quiz_state_id')
+        self.questions = request.session.get('questions')
+        if self.quiz_state_id is None:
+            self.clear_session_quiz_data()
 
     def get_view(self):
         status = self.validate_session()
@@ -65,7 +76,7 @@ class MockQuizPage(Page):
         if self.request.method == 'POST':
             if 'save_answer' in self.request.POST:
                 return self.handle_save_answer()
-            if 'change_question' in self.request.POST:
+            if any(f'change_question_{i+1}' in self.request.POST for i in range(len(self.questions))):
                 return self.handle_change_question()
             if 'finish_quiz' in self.request.POST:
                 return self.handle_finish_quiz()
@@ -73,14 +84,16 @@ class MockQuizPage(Page):
         return self.render_view()
 
     def validate_session(self):
-        logger.info(f"Session in Mock: ${dict(self.request.session)}")
         status = {'is_valid': False, 'message': '404', 'code': 0}
-        if not self.request.session.get('mock_id'):
+        if self.request.session.get('mock_id') is None:
             status['message'] = 'Mock ID not found'
             status['code'] = 1
         elif self.get_time_diff() > self.time_limit:
             status['message'] = "Time's up!"
             status['code'] = 2
+        elif self.request.session.get('quiz_state_id') is None:
+            status['message'] = 'Quiz state ID not found'
+            status['code'] = 1
         else:
             status['is_valid'] = True
         return utils.dict_to_object(status)
@@ -101,16 +114,17 @@ class MockQuizPage(Page):
 
     def answer_choice(self, choice_index):
         # Get the question from session
-        question_id = self.request.session['questions'][-1]['id']
+        current_question = self.questions[self.current_question_number - 1]
+        question_id = current_question['id']
         question_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}/questions/{question_id}')
 
         # Get the selected choice from session
         selected_choice = None
-        for choice in self.request.session['questions'][-1]['choices']:
+        for choice in current_question['choices']:
             if choice['index'] == choice_index:
                 selected_choice = choice
-                self.request.session['questions'][-1]['chosen'] = choice
-                self.request.session['questions'][-1]['hasScored'] = bool(choice.get('isCorrect'))
+                current_question['chosen'] = choice
+                current_question['hasScored'] = bool(choice.get('isCorrect'))
 
         # Update the database with the selected question
         self.db.answer_mock_question(
@@ -124,44 +138,35 @@ class MockQuizPage(Page):
         )
 
     def handle_change_question(self):
-        question_number = self.request.POST.get('change_question')
-        if question_number:
-            self.request.session['current_question_number'] = question_number
-        self.update_last_updated()
+        name = 'change_question_'
+        for i in range(len(self.questions)):
+            if name+str(i+1) in self.request.POST:
+                question_number = self.request.POST.get(f'change_question_{i+1}')
+                if question_number:
+                    self.current_question_number = int(question_number)
+                self.update_last_updated()
+        else:
+            self.context['error'] = "Unable to change question"
         self.load_data()
         return self.render_view()
 
     def load_data(self):
-        question_dict = self.get_question_dict()
+        question_dict = self.questions[self.current_question_number - 1]
         context = {
             'num_questions': self.num_questions,
             'question': utils.dict_to_object(question_dict),
             'question_status': utils.dict_to_object(self.get_question_status()),
             'is_last_question': self.num_questions == self.current_question_number,
         }
-        questions_list = self.request.session['questions']
-        if len(questions_list) == 0 or len(questions_list) > 0 and questions_list[-1]['id'] != question_dict['id']:
-            questions_list.append(question_dict)
         self.context.update(context)
         self.request.session['current_question_number'] = self.current_question_number
 
-    def get_question_dict(self):
-        question = self.db.get_mock_question_from_index(self.mock_id, self.current_question_number)
-        question_dict = question.to_dict()
-        question_dict['id'] = question.id
-        return question_dict
-
     def get_question_status(self):
         answers = []
-        for question in self.request.session['questions']:
+        for question in self.questions:
             answers.append({
                 'number': question['index'],
                 'is_answered': question.get('chosen', False)
-            })
-        for i in range(self.num_questions - len(answers)):
-            answers.append({
-                'number': len(answers) + 1,
-                'is_answered': False
             })
         return answers
 

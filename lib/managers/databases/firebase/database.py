@@ -93,22 +93,22 @@ class FirebaseManager(DatabaseManager):
     def list_mock_tests(self):
         return self._db.collection('mockTests').order_by('index').stream()
 
-    def get_mock_questions(self, mock_id, start_index=1, end_index=10):
+    def get_mock_questions(self, mock_id, start_index=None, end_index=None):
         """
         :param start_index: start index
         :param end_index: one greater than the largest index requested
         :param mock_id: string
         :return: list of questions dict
         """
-        questions_stream = self._db.collection(f'mockTests/{mock_id}/questions') \
-            .where('index', '>=', start_index) \
-            .where('index', '<', end_index) \
-            .order_by(u'index') \
-            .stream()
-        return [question for question in questions_stream]
-
-    def get_mock_questions_reference(self, mock_id):
-        return self._db.collection(f'mockTests/{mock_id}/questions')
+        query = self._db.collection(f'mockTests/{mock_id}/questions')
+        if start_index is not None and end_index is not None:
+            query = query.where('index', '>=', start_index) \
+                .where('index', '<', end_index) \
+                .order_by(u'index')
+        else:
+            query = query.order_by(u'index')
+        questions_stream = query.stream()
+        return questions_stream
 
     def get_admin_document(self):
         admin_docs = self._db.collection('groups').where('name', '==', 'admin')
@@ -160,7 +160,8 @@ class FirebaseManager(DatabaseManager):
     def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs):
         return self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update(pairs)
 
-    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_index, has_scored):
+    def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_index,
+                             has_scored):
         answer_dict = {
             'index': index,
             'questionId': question_reference,
@@ -258,7 +259,8 @@ class FirebaseManager(DatabaseManager):
     def increment_num_mock_tests(self, increment_value):
         self._db.document(f'metaData/mockTests').update({'numMockTests': firestore.Increment(increment_value)})
         if increment_value > 0:
-            self._db.document(f'metaData/mockTests').update({'largestMockTestIndex': firestore.Increment(increment_value)})
+            self._db.document(f'metaData/mockTests').update(
+                {'largestMockTestIndex': firestore.Increment(increment_value)})
 
     def increment_num_attempts(self, player_id, mock_id):
         match_ref = self._db.document(f"users/{player_id}/matches/{mock_id}")

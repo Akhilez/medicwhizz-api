@@ -38,7 +38,7 @@ def start_quiz(request, mock_id):
 
 
 @Decorators.firebase_login_required
-def mock_quiz(request):
+def mock_quiz(request, mock_id=None):
     return MockQuizPage(request).get_view()
 
 

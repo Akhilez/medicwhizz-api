@@ -19,24 +19,57 @@ class PreQuizPage(Page):
         self.user_id = self.user['localId']
 
     def get_view(self):
+
+        validity = self.check_quiz_eligibility()
+        if not validity.is_valid:
+            self.context['error'] = validity.message
+            return self.render_view()
+
         if self.request.method == 'POST':
-            if 'start_quiz' in self.request.POST:
-                start_time = utils.datetime_to_timestamp(datetime.now())
-                mock_test_dict = self.db.get_mock_test(self.mock_id).to_dict()
-                quiz_data = {
-                    'mock_id': self.mock_id,
-                    'current_quiz': self.mock_id,
-                    'start_time': start_time,
-                    'last_updated': start_time,
-                    'time_limit': mock_test_dict['duration'],
-                    'num_questions': mock_test_dict['numQuestions'],
-                    'questions': self.get_questions(),
-                }
-                attempt_ref = self.db.init_mock_quiz(self.user_id, self.mock_id, utils.timestamp_to_datetime(start_time))
-                quiz_data['quiz_state_id'] = attempt_ref.id
-                self.request.session.update(quiz_data)
-                return redirect('quiz:mock')
+            return self.handle_post_request()
+
         return self.render_view()
+
+    def handle_post_request(self):
+        if 'start_quiz' in self.request.POST:
+            start_time = utils.datetime_to_timestamp(datetime.now())
+            mock_test_dict = self.db.get_mock_test(self.mock_id).to_dict()
+            quiz_data = {
+                'mock_id': self.mock_id,
+                'current_quiz': self.mock_id,
+                'start_time': start_time,
+                'last_updated': start_time,
+                'time_limit': mock_test_dict['duration'],
+                'num_questions': mock_test_dict['numQuestions'],
+                'questions': self.get_questions(),
+            }
+            attempt_ref = self.db.init_mock_quiz(self.user_id, self.mock_id, utils.timestamp_to_datetime(start_time))
+            quiz_data['quiz_state_id'] = attempt_ref.id
+            self.request.session.update(quiz_data)
+            return redirect('quiz:mock')
+        return self.render_view()
+
+    def check_quiz_eligibility(self):
+        """
+        1. # TODO: Check if user has unlocked the quiz
+        2. Check max tries
+        :return:
+        """
+        validity = {'message': None, 'code': 0, 'is_valid': False}
+
+        match_reference = self.db.get_document_reference(f'users/{self.user_id}/matches/{self.mock_id}')
+        match_details = match_reference.get().to_dict()
+        max_attempts = match_details.get('maxAttempts')
+        user_attempts = match_details.get('numAttempts')
+        if max_attempts is None:
+            mock_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}')
+            max_attempts = mock_reference.get().to_dict().get('maxAttempts')
+            match_reference.update({'maxAttempts': max_attempts})
+        if max_attempts is not None and user_attempts is not None and user_attempts >= max_attempts:
+            validity['message'] = "Your attempts have been reached maximum."
+            validity['code'] = 2
+
+        return utils.dict_to_object(validity)
 
     def get_questions(self):
         questions = []

@@ -92,6 +92,7 @@ class EditMockPage(Page):
             'index': int(self.request.POST.get('index', 0)),
             'duration': self.request.POST.get('duration'),
             'price': {country: self.request.POST.get(f'price_{country}') for country in ('india', 'uk')},
+            'maxAttempts': self.request.POST.get('maxAttempts', 5),
         }
         self.db.update_mock_quiz_attributes(self.mock_id, attributes)
         self.context['message'] = "Saved quiz successfully."

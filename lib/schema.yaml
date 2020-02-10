@@ -47,7 +47,8 @@ collections:
       matches:  # Collection
         - quizId: mockTests.id  # Document
           type: mock
-          maxTries: 5
+          maxAttempts: 5
+          numAttempts: 3
           mockId: mockTests.id
           attempts:  # Collection
             - startTime: timestamp

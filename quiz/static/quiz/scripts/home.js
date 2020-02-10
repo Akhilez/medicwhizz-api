@@ -18,20 +18,20 @@ let quiz_home_container = new Vue({
                     result = JSON.parse(result);
                     self.my_quizzes = result;
                 },
-                error: function(xhr, status, error){
+                error: function (xhr, status, error) {
                     console.log("Opppppsssss! Error!");
                     console.log(error);
                 }
             });
         },
-        getDate: function(dateTime) {
+        getDate: function (dateTime) {
             let sample = '2020-02-08 22:49:38.380821+00:00';
             return dateTime.slice(0, 10);
         },
         getDuration: function (attempt) {
-            let startTime = attempt.startTime.slice(11, 18);
-            let endTime = attempt.endTime.slice(11, 18);
-            return `${startTime} - ${endTime} (${(attempt.elapsedTime/60.0).toFixed(2)} / ${attempt.max_duration} min)`;
+            let startTime = (attempt.startTime == null)? '': attempt.startTime.slice(11, 18);
+            let endTime = (attempt.endTime == null) ? '' : attempt.endTime.slice(11, 18);
+            return `${startTime} - ${endTime} (${(attempt.elapsedTime / 60.0).toFixed(2)} / ${attempt.max_duration} min)`;
         },
     }
 });

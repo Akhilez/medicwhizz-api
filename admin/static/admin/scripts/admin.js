@@ -1,26 +1,27 @@
-let questionEditorSection = new Vue({
+let admin_home_container = new Vue({
     delimiters: ['[[', ']]'],
-    el: '#questionEditorSection',
+    el: '#admin_home_container',
     data: {
-        counter: {'days': 0, 'hours': 0, 'minutes': 0, 'seconds': 0},
-        choices: [],
+        dummy: "hi",
     },
     created: function () {
-        this.populate_choices();
+        console.log("hi");
     },
     methods: {
-        add_choice: function () {
-            let self = this;
-            let choices_table = $("#choices_table");
+        disablePackagesEditing: function(disabled) {
+            $("#packages_editor_table :input").attr("disabled", disabled);
+            let disabler = $("#packageEditDisabler");
+            let enabler = $("#packageEditEnabler");
+            if (disabled){
+                enabler.hide();
+                disabler.show();
+            } else {
+                enabler.show();
+                disabler.hide();
+            }
         },
-        populate_choices: function () {
-            $('#choices_table tr').each(function () {
-                console.log($(this));
-                $(this).find('td').each(function () {
-                    //do your stuff, you can use $(this) to get current cell
-                })
-            })
-
+        deletePackage: function(package_id) {
+            console.log("Deleting package" + package_id);
         }
     }
 });

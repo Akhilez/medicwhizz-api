@@ -40,7 +40,7 @@ class HomePage(Page):
 
     def check_running_quizzes(self):
         if self.request.session.get('quiz_state_id') is None:
-            running_quiz_details = self.db.get_running_quiz(self, self.user_id)
+            running_quiz_details = self.db.get_running_quiz(self.user_id)
             if running_quiz_details is not None:
                 self.request.session.update(running_quiz_details)
         return self.request.session.get('mock_id')

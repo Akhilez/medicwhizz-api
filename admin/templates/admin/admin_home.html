@@ -1,8 +1,9 @@
 {% extends 'quiz/base.html' %}
+{% load static %}
 
 {% block container %}
 
-    <div class="container">
+    <div class="container" id="admin_home_container">
 
         <h3 class="mdl-typography--text-left">Mock Tests</h3>
 
@@ -10,16 +11,14 @@
             <thead>
             <tr>
                 <th class="mdl-data-table__cell--non-numeric">Name</th>
-                <th>Price in India</th>
-                <th>Price in UK</th>
+                <th>Package</th>
             </tr>
             </thead>
             <tbody>
             {% for test in mock_tests %}
                 <tr>
                     <td class="mdl-data-table__cell--non-numeric">{{ test.name }}</td>
-                    <td>{{ test.price.india }}</td>
-                    <td>{{ test.price.uk }}</td>
+                    <td>{{ test.package }}</td>
                     <td><a href="{% url 'admin:edit_mock' test.id %}"
                            class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">View</a>
                     </td>
@@ -27,12 +26,131 @@
             {% endfor %}
             <tr>
                 <td colspan="4"><a href="{% url 'admin:add_mock' %}"
-                       class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">Add</a>
+                                   class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">Add</a>
                 </td>
             </tr>
             </tbody>
         </table>
+        <form>
+            {% csrf_token %}
+            <h4>Packages</h4>
+            <table id="packages_editor_table" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                <tr>
+                    <th class="mdl-data-table__cell--non-numeric">Package Id</th>
+                    <th class="mdl-data-table__cell--non-numeric">Package Name</th>
+                    <th class="mdl-data-table__cell--non-numeric">Price in UK</th>
+                    <th class="mdl-data-table__cell--non-numeric">Price in In</th>
+                    <th class="mdl-data-table__cell--non-numeric"><input id="packageEditEnabler" type="button" value="Edit"
+                               onclick="disablePackagesEditing(false)"
+                               class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    </th>
+                    <th class="mdl-data-table__cell--non-numeric">Description</th>
+                </tr>
+                {% for package_id, package in packages.items %}
+                    <tr id="package_row_{{ package_id }}">
+                        <td><input class="mdl-textfield__input" type="text" name="package_id_{{ package_id }}"
+                                   value="{{ package_id }}" disabled>
+                        <td><input class="mdl-textfield__input" type="text" name="package_name_{{ package_id }}"
+                                   value="{{ package.name }}" disabled>
+                        </td>
+                        <td><input class="mdl-textfield__input" type="number" name="package_price_uk_{{ package_id }}"
+                                   value="{{ package.price.uk }}"
+                                   disabled></td>
+                        <td><input type="number" name="package_price_india_{{ package_id }}"
+                                   class="mdl-textfield__input" value="{{ package.price.india }}" disabled></td>
+                        <td><input type="button" onclick="deletePackage('{{ package_id }}')" value="Delete" disabled
+                                   class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                        </td>
+                        <td><input class="mdl-textfield__input" type="text" name="package_description_{{ package_id }}"
+                                   value="{{ package.description }}" disabled></td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td>
+                        <input id="packageEditAdder" type="button" value="Add" onclick="addPackage()" disabled
+                               class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    </td>
+                    <td>
+                        <input id="packageEditSaver" disabled type="submit" name="save_packages" value="Save"
+                               class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    </td>
+                    <td>
+                        <input id="packageEditDisabler" hidden type="button" value="Close"
+                               onclick="disablePackagesEditing(true)" class="mdl-button">
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <dialog class="mdl-dialog" id="packageDeleteDialog">
+            <h4 class="mdl-dialog__title">Delete package?</h4>
+            <div class="mdl-dialog__content">
+                <p>
+                    Confirm deleting package.
+                </p>
+            </div>
+            <div class="mdl-dialog__actions">
+                <button type="button" class="mdl-button" onclick="confirmDeletePackage()">Yes</button>
+                <button type="button" class="mdl-button close" onclick="closePackageDeleteDialog()">No</button>
+            </div>
+        </dialog>
 
     </div>
 
 {% endblock container %}
+
+{% block scripts %}
+    <script src="{% static 'admin/scripts/admin.js' %}"></script>
+
+    <script>
+
+        function disablePackagesEditing(disabled) {
+            console.log(disabled);
+            $("#packages_editor_table :input").attr("disabled", disabled);
+            let disabler = $("#packageEditDisabler");
+            let enabler = $("#packageEditEnabler");
+
+            enabler.attr("disabled", false);
+            disabler.attr("disabled", false);
+
+            enabler.attr("hidden", !disabled);
+            disabler.attr("hidden", disabled);
+
+        }
+
+        function addPackage() {
+            let table = document.getElementById("packages_editor_table");
+            let row = table.insertRow(table.rows.length - 1);
+            let new_row_id = table.rows.length - 2;
+            row.innerHTML = "<td><input class=\"mdl-textfield__input\" type=\"text\" name=\"package_id_" + new_row_id + "\">" +
+                "                        <td><input class=\"mdl-textfield__input\" type=\"text\" name=\"package_name_" + new_row_id + "\"\n" + ">" +
+                "                        </td><td><input class=\"mdl-textfield__input\" type=\"text\" name=\"package_price_uk_" + new_row_id + "\"</td>" +
+                "                        <td><input type=\"text\" name=\"package_price_india_" + new_row_id + "\" class=\"mdl-textfield__input\"> </td>\n" +
+                "                        <td><input type=\"button\" value=\"Delete\" onclick=\"deletePackage('" + new_row_id + "')\" class=\"mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect\">\n" +
+                "                        </td>\n" +
+                "                        <td><input class=\"mdl-textfield__input\" type=\"text\" name=\"package_description_" + new_row_id + "\" ></td>";
+        }
+
+        let deletingPackage = null;
+        let packageDeleteDialog = document.querySelector('#packageDeleteDialog');
+
+        function deletePackage(package_id) {
+            console.log("Deleting package" + package_id);
+            deletingPackage = package_id;
+            packageDeleteDialog.showModal();
+        }
+
+        function confirmDeletePackage() {
+            $("#package_row_" + deletingPackage).remove();
+            deletingPackage = null;
+            packageDeleteDialog.close();
+        }
+
+        function closePackageDeleteDialog() {
+            packageDeleteDialog.close();
+            deletingPackage = null;
+        }
+
+
+    </script>
+{% endblock scripts %}

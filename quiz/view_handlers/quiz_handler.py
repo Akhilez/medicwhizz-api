@@ -23,6 +23,7 @@ class PreQuizPage(Page):
         validity = self.check_quiz_eligibility()
         if not validity.is_valid:
             self.context['error'] = validity.message
+            self.context['cannot_start'] = True
             return self.render_view()
 
         if self.request.method == 'POST':
@@ -65,9 +66,17 @@ class PreQuizPage(Page):
             mock_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}')
             max_attempts = mock_reference.get().to_dict().get('maxAttempts')
             match_reference.update({'maxAttempts': max_attempts})
-        if max_attempts is not None and user_attempts is not None and user_attempts >= max_attempts:
-            validity['message'] = "Your attempts have been reached maximum."
-            validity['code'] = 2
+        if max_attempts is not None and user_attempts is not None and int(user_attempts) >= int(max_attempts):
+            # Check if the actual mock test has the same number of max_attempts or not.
+            mock_reference = self.db.get_document_reference(f'mockTests/{self.mock_id}')
+            max_attempts_real = mock_reference.get().to_dict().get('maxAttempts')
+            if int(max_attempts) == int(max_attempts_real):
+                validity['message'] = "Your attempts have been reached maximum."
+                validity['code'] = 2
+            else:
+                match_reference.update({'maxAttempts': max_attempts_real})
+
+        validity['is_valid'] = True
 
         return utils.dict_to_object(validity)
 

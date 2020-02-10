@@ -1,13 +1,20 @@
 {% extends 'quiz/base.html' %}
 {% block container %}
     <div class="container">
-        Ready for quiz? Here are the rules.
-        <form action="" method="post">
-            {% csrf_token %}
-            <button type="submit" name="start_quiz"
-                    class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                Start
-            </button>
-        </form>
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if not cannot_start %}
+            Ready for quiz? Here are the rules.
+            <form action="" method="post">
+                {% csrf_token %}
+                <button type="submit" name="start_quiz"
+                        class="mdl-button mdl-button--raised mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    Start
+                </button>
+            </form>
+        {% endif %}
     </div>
 {% endblock container %}

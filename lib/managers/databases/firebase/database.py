@@ -147,6 +147,10 @@ class FirebaseManager(DatabaseManager):
         player_details = self._db.document(f'users/{player_id}').get()
         return player_details.to_dict().get('running_quiz')
 
+    def get_packages(self):
+        return self._db.document(f'metaData/packages').get().to_dict()
+
+
     # ========================== MODIFICATIONS ================================
 
     def init_mock_quiz(self, player_id, mock_id, start_time):

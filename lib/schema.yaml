@@ -6,12 +6,6 @@ collections:
       text: "Coming Soon"
       position: 100
       title: WhatsApp
-  packages: # col
-    basic:
-      duration: 365
-      endIndex: 300
-      price: 2.5
-      startIndex: 1
   questions:  # Col
     - index: 818
       text: question?
@@ -111,3 +105,10 @@ collections:
   metaData:
     - mockTests:
         numMockTests: 3
+    - packages: # doc
+        basic:
+          name: Basic
+          price:
+            india: 1234
+            uk: 23
+          description: Pay $23 for 2 mock tests

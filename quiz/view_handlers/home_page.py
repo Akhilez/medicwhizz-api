@@ -9,9 +9,10 @@ class HomePage(Page):
         self.template_path = 'quiz/index.html'  # index.html'
         self.db = FirebaseManager.get_instance()
         self.user = FirebaseAuth.get_instance().initialize_user_auth_details(request.session.get('id_token'))
+        self.user_id = self.user['localId']
 
     def get_view(self):
-        if self.db.is_user_admin(self.user.get('localId')):
+        if self.db.is_user_admin(self.user_id):
             self.context['is_admin'] = True
         self.context['mock_tests'] = self.get_mock_tests()
         return self.render_view()
@@ -39,5 +40,7 @@ class HomePage(Page):
 
     def check_running_quizzes(self):
         if self.request.session.get('quiz_state_id') is None:
-            return
+            running_quiz_details = self.db.get_running_quiz(self, self.user_id)
+            if running_quiz_details is not None:
+                self.request.session.update(running_quiz_details)
         return self.request.session.get('mock_id')

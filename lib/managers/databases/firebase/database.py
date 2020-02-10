@@ -143,6 +143,10 @@ class FirebaseManager(DatabaseManager):
         player_details = self._db.document(f"users/{player_id}").get()
         return player_details.to_dict().get('numTotalAttempts')
 
+    def get_running_quiz(self, player_id):
+        player_details = self._db.document(f'users/{player_id}').get()
+        return player_details.to_dict().get('running_quiz')
+
     # ========================== MODIFICATIONS ================================
 
     def init_mock_quiz(self, player_id, mock_id, start_time):
@@ -154,11 +158,31 @@ class FirebaseManager(DatabaseManager):
             'answers': [],
         }
         response = self._db.collection(f'users/{player_id}/matches/{mock_id}/attempts').add(mock_quiz_dict)
-        self.increment_num_attempts(player_id, mock_id)
-        return self.validate_response(response)
+        if len(response) == 2 and isinstance(response[1], DocumentReference):
+            try:
+                self.increment_num_attempts(player_id, mock_id)
+                self.init_running_quiz(player_id, mock_id, response.id)
+            except Exception as e:
+                logger.exception(e)
+            return response[1]
+        return str(response)
 
-    def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs):
-        return self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update(pairs)
+    def init_running_quiz(self, player_id, mock_id, quiz_state_id):
+        self._db.document(f'users/{player_id}').update({
+            'running_quiz': {
+                'mock_id': mock_id,
+                'quiz_state_id': quiz_state_id,
+            }
+        })
+
+    def update_quiz_state(self, player_id, mock_id, quiz_state_id, pairs, ended=False):
+        response = self._db.document(f'users/{player_id}/matches/{mock_id}/attempts/{quiz_state_id}').update(pairs)
+        if ended:
+            try:
+                self._db.document(f'users/{player_id}').update({'running_quiz': None})
+            except Exception as e:
+                logger.exception(e)
+        return response
 
     def answer_mock_question(self, player_id, quiz_state_id, mock_id, index, question_reference, choice_index,
                              has_scored):

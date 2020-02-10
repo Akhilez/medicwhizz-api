@@ -199,7 +199,7 @@ class MockQuizPage(Page):
             'score': score,
             'scoreMaxEnd': out_of
         }
-        self.db.update_quiz_state(self.user_id, self.mock_id, self.quiz_state_id, finishing_data)
+        self.db.update_quiz_state(self.user_id, self.mock_id, self.quiz_state_id, finishing_data, ended=True)
 
     def update_last_updated(self):
         try:

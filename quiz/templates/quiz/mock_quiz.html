@@ -20,11 +20,14 @@
                     <span class="mdl-radio__label">{{ choice.text }}</span>
                 </label><br/>
             {% endfor %}
-            <input type="submit" name="save_answer" value="{% if is_last_question %}FINISH{% else %}SAVE{% endif %}">
+        <br/>
+            <input type="submit" name="save_answer" value="{% if is_last_question %}FINISH{% else %}SAVE{% endif %}"
+            class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"><br/><br/>
 
             <div>
                 {% for status in question_status %}
-                    <button type="submit" name="change_question" value="{{ status.number }}">
+                    <button type="submit" name="change_question" value="{{ status.number }}"
+                    class="mdl-button mdl-js-button mdl-button{% if status.is_answered %}--accent{% else %}--primary{% endif %}">
                         {{ status.number }} {% if status.is_answered %}*{% endif %}
                     </button>
                 {% endfor %}

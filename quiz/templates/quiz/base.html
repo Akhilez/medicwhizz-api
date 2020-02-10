@@ -22,8 +22,6 @@
     <!-- link rel="stylesheet" href="{#% static 'app/app_style.css' %#}" -->
     <title>{% block title %}Medic Whizz{% endblock title %}</title>
 
-    <script src="{% static 'quiz/scripts/vue.js' %}"></script>
-
     {% block style %} {% endblock %}
 </head>
 
@@ -61,6 +59,8 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+
+<script src="{% static 'quiz/scripts/vue.js' %}"></script>
 
 {% block scripts %} {% endblock scripts %}
 

@@ -32,6 +32,7 @@ def reset_password(request):
     return ResetPasswordPage(request).get_view()
 
 
+@Decorators.firebase_login_required
 def start_quiz(request, mock_id):
     return PreQuizPage(request, mock_id).get_view()
 
@@ -41,6 +42,7 @@ def mock_quiz(request):
     return MockQuizPage(request).get_view()
 
 
+@Decorators.firebase_login_required
 def mock_quiz_results(request, mock_id, quiz_id):
     from quiz.view_handlers.quiz_results_page import QuizResultsPage
     return QuizResultsPage(request, mock_id, quiz_id).get_view()
